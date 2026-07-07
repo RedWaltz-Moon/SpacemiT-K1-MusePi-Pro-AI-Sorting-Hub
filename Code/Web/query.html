@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>速递智管 · 快捷查件</title>
+    <link rel="stylesheet" href="theme.css">
+    <script src="theme.js"></script>
+    <style>
+        :root {
+            --bg:         #f0f2f5;
+            --surface:    #ffffff;
+            --border:     #e4e7ec;
+            --text-1:     #101828;
+            --text-2:     #475467;
+            --text-3:     #98a2b3;
+            --accent:     #1570ef;
+            --accent-dim: #eff4ff;
+            --green:      #12b76a;
+            --green-bg:   #ecfdf3;
+            --green-text: #027a48;
+            --orange-bg:  #fffaeb;
+            --orange-text:#b54708;
+            --red-bg:     #fef3f2;
+            --red-text:   #b42318;
+            --radius:     10px;
+            --shadow:     0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text-1);
+            font-size: 14px;
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 48px 16px 32px;
+        }
+
+        .logo {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 32px;
+        }
+        .logo-mark {
+            width: 36px; height: 36px; background: var(--accent);
+            border-radius: 9px; display: flex; align-items: center;
+            justify-content: center; font-size: 16px; font-weight: 700; color: #fff;
+        }
+        .logo-name { font-size: 18px; font-weight: 700; letter-spacing: -.3px; color: var(--text-1); }
+        .logo-sub  { font-size: 12px; color: var(--text-3); margin-top: 1px; }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: 0 4px 24px rgba(16,24,40,.07), 0 1px 3px rgba(16,24,40,.05);
+            width: 100%; max-width: 400px;
+            padding: 32px;
+        }
+        .card-title {
+            font-size: 16px; font-weight: 600; margin-bottom: 6px;
+        }
+        .card-hint {
+            font-size: 13px; color: var(--text-3); margin-bottom: 20px;
+        }
+
+        .input-row {
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .phone-input {
+            width: 100%; height: 40px; padding: 0 14px;
+            border: 1px solid #d0d5dd; border-radius: 8px;
+            font-size: 14px; color: var(--text-1); font-family: inherit;
+            background: #fff; outline: none;
+            transition: border-color .15s, box-shadow .15s;
+            letter-spacing: 1px;
+        }
+        .phone-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(21,112,239,.1);
+        }
+        .phone-input::placeholder { color: var(--text-3); letter-spacing: 0; }
+
+        .btn-query {
+            width: 100%; height: 40px; border: none; border-radius: 8px;
+            background: var(--accent); color: #fff;
+            font-size: 14px; font-weight: 600; font-family: inherit;
+            cursor: pointer;
+            transition: background .15s;
+        }
+        .btn-query:hover    { background: #1264d3; }
+        .btn-query:disabled { opacity: .6; cursor: not-allowed; }
+        .btn-query:active   { transform: scale(.97); }
+
+        /* results */
+        .result-area { margin-top: 20px; }
+
+        .err-msg {
+            padding: 12px 14px; border-radius: 8px;
+            background: var(--red-bg); color: var(--red-text);
+            font-size: 13px;
+        }
+
+        .empty-msg {
+            padding: 20px; text-align: center;
+            color: var(--text-3); font-size: 13px;
+        }
+
+        .pkg-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .pkg-card {
+            border: 1.5px solid var(--border); border-radius: 8px;
+            padding: 14px 16px; background: #fff;
+        }
+        .pkg-card-top {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .pkg-tracking {
+            font-family: 'SF Mono','JetBrains Mono','Consolas',monospace;
+            font-size: 13px; background: var(--bg); padding: 2px 8px;
+            border-radius: 5px; color: var(--text-1);
+        }
+        .shelf-badge {
+            font-size: 13px; font-weight: 700;
+            padding: 4px 12px; border-radius: 20px;
+            background: var(--green-bg); color: var(--green-text);
+        }
+        .pkg-meta { font-size: 12px; color: var(--text-3); display: flex; gap: 14px; flex-wrap: wrap; }
+        .pkg-meta span { display: flex; align-items: center; gap: 4px; }
+
+        .duration-ok   { color: var(--green-text); font-weight: 600; }
+        .duration-warn { color: var(--orange-text); font-weight: 600; }
+        .duration-err  { color: var(--red-text);    font-weight: 600; }
+
+        .tag-cat {
+            display: inline-block; padding: 2px 8px; border-radius: 5px;
+            font-size: 11.5px; font-weight: 500;
+            background: var(--accent-dim); color: var(--accent);
+        }
+
+        .btn-back {
+            display: inline-flex; align-items: center; gap: 6px;
+            margin: 20px 0 0; padding: 8px 16px;
+            border: 1px solid var(--border); border-radius: 8px;
+            background: var(--surface); color: var(--text-2);
+            font-size: 13px; font-weight: 500; text-decoration: none;
+            transition: border-color .15s, color .15s;
+            width: 100%; justify-content: center;
+        }
+        .btn-back:hover { border-color: var(--accent); color: var(--accent); }
+
+        @media (max-width: 480px) {
+            body { padding: 16px; }
+            .logo { margin-bottom: 24px; }
+            .logo-mark { width: 32px; height: 32px; font-size: 14px; }
+            .logo-name { font-size: 16px; }
+            .card { padding: 24px 20px; }
+            .card-title { font-size: 15px; }
+            .card-hint { font-size: 12px; margin-bottom: 16px; }
+            .phone-input { height: 44px; font-size: 16px; }
+            .btn-query   { height: 44px; font-size: 15px; }
+            .pkg-card {
+                padding: 12px;
+            }
+            .pkg-card-top {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .pkg-tracking { font-size: 12px; }
+            .shelf-badge { align-self: flex-start; }
+            .pkg-meta {
+                flex-direction: column;
+                gap: 6px;
+            }
+            .btn-back { margin-top: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="logo">
+    <div class="logo-mark">S</div>
+    <div>
+        <div class="logo-name">速递智管</div>
+        <div class="logo-sub">快捷查件</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">查询我的包裹</div>
+    <div class="card-hint">输入手机号，即可查看包裹所在货架，无需注册登录</div>
+
+    <div class="input-row">
+        <input class="phone-input" id="phone-input" type="tel"
+               placeholder="输入手机号" maxlength="11" inputmode="numeric"
+               onkeydown="if(event.key==='Enter') doQuery()">
+        <button class="btn-query" id="btn-query" onclick="doQuery()">查询</button>
+    </div>
+
+    <div class="result-area" id="result-area"></div>
+
+    <a class="btn-back" href="login.html">← 返回登录</a>
+</div>
+
+<script>
+    const esc = s => s == null ? '' : String(s).replace(/[&<>"']/g,
+        c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+    function duration(iso) {
+        const ms = iso ? Date.now() - new Date(iso).getTime() : NaN;
+        if (isNaN(ms) || ms < 0) return null;
+        const s = Math.floor(ms / 1e3), m = Math.floor(s / 60),
+              h = Math.floor(m / 60),   d = Math.floor(h / 24);
+        if (d > 0) return `${d}天${h % 24 ? (h % 24) + '小时' : ''}`;
+        if (h > 0) return `${h}小时${m % 60 ? (m % 60) + '分' : ''}`;
+        if (m > 0) return `${m}分钟`;
+        return `${Math.max(s, 1)}秒`;
+    }
+
+    function durationClass(iso) {
+        if (!iso) return 'duration-err';
+        const days = (Date.now() - new Date(iso).getTime()) / 864e5;
+        if (days > 3) return 'duration-warn';
+        return 'duration-ok';
+    }
+
+    function fmtDate(iso) {
+        if (!iso) return '—';
+        try {
+            const d = new Date(iso);
+            return isNaN(d) ? iso.slice(0, 16) : d.toLocaleString('zh-CN', { hour12: false }).replace(/:\d{2}$/, '');
+        } catch { return iso; }
+    }
+
+    async function doQuery() {
+        const phone = document.getElementById('phone-input').value.trim();
+        const area  = document.getElementById('result-area');
+        const btn   = document.getElementById('btn-query');
+
+        if (!phone) {
+            area.innerHTML = '<div class="err-msg">请输入手机号</div>';
+            return;
+        }
+        if (!/^\d{7,11}$/.test(phone)) {
+            area.innerHTML = '<div class="err-msg">请输入有效手机号（7–11 位数字）</div>';
+            return;
+        }
+
+        btn.disabled    = true;
+        btn.textContent = '查询中…';
+        area.innerHTML  = '';
+        try {
+            const res  = await fetch(`query_shipment.php?phone=${encodeURIComponent(phone)}`);
+            const data = await res.json();
+
+            if (data.error) {
+                area.innerHTML = `<div class="err-msg">${esc(data.error)}</div>`;
+                return;
+            }
+
+            const list = Array.isArray(data) ? data : [];
+            if (list.length === 0) {
+                area.innerHTML = '<div class="empty-msg">未找到该手机号对应的包裹<br>如有疑问请联系站点工作人员</div>';
+                return;
+            }
+
+            area.innerHTML = `<div class="pkg-list">${list.map(r => {
+                const dur = duration(r.created_at) || '—';
+                const cls = durationClass(r.created_at);
+                return `<div class="pkg-card">
+                    <div class="pkg-card-top">
+                        <span class="pkg-tracking">${esc(r.tracking_number || '—')}</span>
+                        <span class="shelf-badge">${esc(r.location)} 号位</span>
+                    </div>
+                    <div class="pkg-meta">
+                        <span>在库 <span class="${cls}">${dur}</span></span>
+                        <span>入库 ${fmtDate(r.created_at)}</span>
+                        ${r.category ? `<span><span class="tag-cat">${esc(r.category)}</span></span>` : ''}
+                        ${r.raw_text ? `<span title="${esc(r.raw_text)}">${esc(r.raw_text.length > 20 ? r.raw_text.slice(0,20)+'…' : r.raw_text)}</span>` : ''}
+                    </div>
+                </div>`;
+            }).join('')}</div>`;
+        } catch (e) {
+            area.innerHTML = `<div class="err-msg">查询失败：${esc(e.message)}</div>`;
+        } finally {
+            btn.disabled    = false;
+            btn.textContent = '查询';
+        }
+    }
+
+    document.getElementById('phone-input').focus();
+</script>
+</body>
+</html>

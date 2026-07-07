@@ -1,0 +1,15 @@
+{
+  "id": "hardware-tools",
+  "name": "hardware-tools",
+  "version": "1.0.0",
+  "description": "快递站硬件控制与数据查询工具库",
+  "configSchema": {},
+  "contracts": {
+    "tools": [
+      "hw_query_packages",
+      "hw_get_busyness",
+      "hw_create_anomaly",
+      "hw_prepare_pickup"
+    ]
+  }
+}

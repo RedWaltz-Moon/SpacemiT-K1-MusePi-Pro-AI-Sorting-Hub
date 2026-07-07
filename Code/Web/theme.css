@@ -1,0 +1,237 @@
+/* 深色模式 —— 全局变量覆盖与硬编码颜色补丁 */
+
+html, body, .card, .table-card, .form-card, .chart-card, .shelf-layout,
+.stat-card, .modal, .list-toolbar, .app-header, .status-bar,
+.form-input, .phone-input, .search-box input, .pkg-card-m, .pkg-card,
+.taken-card-m, .history-card-m, .shelf-card, .drop-zone, .pkg-cards-sort {
+    transition: background-color .25s ease, color .25s ease,
+                border-color .25s ease, box-shadow .25s ease;
+}
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+    --bg:          #0f172a;
+    --surface:     #1e293b;
+    --border:      #334155;
+    --border-soft: #1e293b;
+    --text-1:      #f1f5f9;
+    --text-2:      #cbd5e1;
+    --text-3:      #94a3b8;
+    --accent:      #60a5fa;
+    --accent-dim:  #1e3a5f;
+    --accent-text: #93c5fd;
+    --green:       #34d399;
+    --green-bg:    #064e3b;
+    --green-text:  #6ee7b7;
+    --orange:      #fbbf24;
+    --orange-bg:   #422006;
+    --orange-text: #fcd34d;
+    --red:         #f87171;
+    --red-bg:      #450a0a;
+    --red-text:    #fca5a5;
+    --shadow:      0 1px 3px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.3);
+}
+
+/* 通用页面 body 背景（show.html / 其他使用变量的页面已通过变量覆盖） */
+html[data-theme="dark"] body {
+    background: var(--bg) !important;
+    color: var(--text-1) !important;
+}
+
+/* 登录 / 注册 / 查件 / 个人 / 重置密码页 —— 这些页面使用硬编码颜色 */
+html[data-theme="dark"] body {
+    background: #0f172a;
+}
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .form-card {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    box-shadow: 0 4px 24px rgba(0,0,0,.45), 0 1px 3px rgba(0,0,0,.3);
+}
+html[data-theme="dark"] .card-title,
+html[data-theme="dark"] .form-card-title,
+html[data-theme="dark"] .modal-title,
+html[data-theme="dark"] .section-title,
+html[data-theme="dark"] .chart-title,
+html[data-theme="dark"] .stat-value,
+html[data-theme="dark"] .brand-name,
+html[data-theme="dark"] .logo-name,
+html[data-theme="dark"] .detail-item-val {
+    color: #f1f5f9 !important;
+}
+html[data-theme="dark"] .card-sub,
+html[data-theme="dark"] .card-hint,
+html[data-theme="dark"] .field-hint,
+html[data-theme="dark"] .captcha-hint,
+html[data-theme="dark"] .footer-link,
+html[data-theme="dark"] .copyright,
+html[data-theme="dark"] .empty-msg,
+html[data-theme="dark"] .stat-label,
+html[data-theme="dark"] .stat-sub,
+html[data-theme="dark"] .section-hint,
+html[data-theme="dark"] .form-label,
+html[data-theme="dark"] .pkg-meta,
+html[data-theme="dark"] .logo-sub {
+    color: #94a3b8 !important;
+}
+html[data-theme="dark"] .form-input,
+html[data-theme="dark"] .phone-input,
+html[data-theme="dark"] .search-box input {
+    background: #0f172a !important;
+    color: #f1f5f9 !important;
+    border-color: #334155 !important;
+}
+html[data-theme="dark"] .form-input::placeholder,
+html[data-theme="dark"] .phone-input::placeholder,
+html[data-theme="dark"] .search-box input::placeholder {
+    color: #64748b !important;
+}
+html[data-theme="dark"] .form-input:focus,
+html[data-theme="dark"] .phone-input:focus,
+html[data-theme="dark"] .search-box input:focus {
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 3px rgba(96,165,250,.2) !important;
+    background: #1e293b !important;
+}
+html[data-theme="dark"] .divider {
+    border-top-color: #334155 !important;
+}
+html[data-theme="dark"] .error-msg {
+    background: #450a0a !important;
+    border-color: #7f1d1d !important;
+    color: #fca5a5 !important;
+}
+html[data-theme="dark"] .success-msg {
+    background: #064e3b !important;
+    border-color: #047857 !important;
+    color: #6ee7b7 !important;
+}
+html[data-theme="dark"] .err-msg {
+    background: #450a0a !important;
+    color: #fca5a5 !important;
+}
+html[data-theme="dark"] .pkg-card,
+html[data-theme="dark"] .pkg-card-m,
+html[data-theme="dark"] .taken-card-m,
+html[data-theme="dark"] .history-card-m,
+html[data-theme="dark"] .shelf-card,
+html[data-theme="dark"] .table-card,
+html[data-theme="dark"] .chart-card,
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .list-toolbar,
+html[data-theme="dark"] .modal,
+html[data-theme="dark"] .pkg-cards-sort,
+html[data-theme="dark"] .form-card-inner {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+html[data-theme="dark"] .pkg-tracking,
+html[data-theme="dark"] .pkg-card-m-tracking,
+html[data-theme="dark"] .taken-card-m-tracking,
+html[data-theme="dark"] .history-card-m-tracking,
+html[data-theme="dark"] .mono {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+html[data-theme="dark"] thead th {
+    background: #0f172a !important;
+    color: #94a3b8 !important;
+    border-bottom-color: #334155 !important;
+}
+html[data-theme="dark"] tbody td {
+    border-bottom-color: #1e293b !important;
+}
+html[data-theme="dark"] tbody tr:hover td {
+    background: #182338 !important;
+}
+html[data-theme="dark"] .drop-zone {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+html[data-theme="dark"] .drop-zone:hover,
+html[data-theme="dark"] .drop-zone.dragover {
+    background: #1e3a5f !important;
+    border-color: #60a5fa !important;
+}
+html[data-theme="dark"] .shelf-aisle {
+    background: #0f172a !important;
+    border-left-color: #334155 !important;
+    border-right-color: #334155 !important;
+}
+html[data-theme="dark"] .shelf-aisle span,
+html[data-theme="dark"] .shelf-side-label {
+    color: #94a3b8 !important;
+}
+html[data-theme="dark"] .shelf-side-label {
+    border-bottom-color: #334155 !important;
+}
+html[data-theme="dark"] .detail-row > td {
+    background: #1e3a5f !important;
+    border-bottom-color: #1e293b !important;
+}
+html[data-theme="dark"] .row-shelf-active td,
+html[data-theme="dark"] tbody tr.row-shelf-active td {
+    background: #1e3a5f !important;
+}
+html[data-theme="dark"] .status-bar {
+    background: rgba(15,23,42,.92) !important;
+    border-top-color: #334155 !important;
+    color: #94a3b8 !important;
+}
+html[data-theme="dark"] .btn-ghost,
+html[data-theme="dark"] .btn-action.btn-edit {
+    background: #1e293b !important;
+    color: #cbd5e1 !important;
+    border-color: #334155 !important;
+}
+html[data-theme="dark"] .btn-ghost:hover,
+html[data-theme="dark"] .btn-action.btn-edit:hover {
+    color: #60a5fa !important;
+    border-color: #60a5fa !important;
+}
+html[data-theme="dark"] .btn-action.btn-delete {
+    background: #450a0a !important;
+    color: #fca5a5 !important;
+    border-color: #7f1d1d !important;
+}
+html[data-theme="dark"] .modal-overlay {
+    background: rgba(0,0,0,.65) !important;
+}
+html[data-theme="dark"] .modal-header,
+html[data-theme="dark"] .modal-footer {
+    border-color: #334155 !important;
+}
+html[data-theme="dark"] .modal-close:hover {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+html[data-theme="dark"] .captcha-img {
+    border-color: #334155 !important;
+    filter: invert(.88) hue-rotate(180deg);
+}
+html[data-theme="dark"] .query-link {
+    background: #1e3a5f !important;
+    color: #93c5fd !important;
+    border-color: #1e3a5f !important;
+}
+html[data-theme="dark"] .csv-hint code {
+    background: #0f172a !important;
+    color: #cbd5e1 !important;
+}
+html[data-theme="dark"] .btn-back {
+    background: #1e293b !important;
+    color: #cbd5e1 !important;
+    border-color: #334155 !important;
+}
+html[data-theme="dark"] .bar-track,
+html[data-theme="dark"] .shelf-bar-track {
+    background: #0f172a !important;
+}
+
+/* 主题切换按钮：深色模式微调 */
+html[data-theme="dark"] #theme-toggle {
+    background: #1e293b !important;
+    color: #fcd34d !important;
+    border-color: #334155 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,.4) !important;
+}

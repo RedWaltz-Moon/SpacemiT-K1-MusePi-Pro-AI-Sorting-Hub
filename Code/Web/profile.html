@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>速递智管 · 个人中心</title>
+    <link rel="stylesheet" href="theme.css">
+    <script src="theme.js"></script>
+    <style>
+        :root {
+            --bg:          #f0f2f5;
+            --surface:     #ffffff;
+            --border:      #e4e7ec;
+            --border-soft: #f0f2f5;
+            --text-1:      #101828;
+            --text-2:      #475467;
+            --text-3:      #98a2b3;
+            --accent:      #1570ef;
+            --accent-dim:  #eff4ff;
+            --accent-text: #1d4ed8;
+            --green:       #12b76a;
+            --green-bg:    #ecfdf3;
+            --green-text:  #027a48;
+            --orange-bg:   #fffaeb;
+            --orange-text: #b54708;
+            --red:         #f04438;
+            --red-bg:      #fef3f2;
+            --red-text:    #b42318;
+            --radius:      10px;
+            --shadow:      0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04);
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg); color: var(--text-1);
+            font-size: 14px; line-height: 1.5;
+            min-height: 100vh; padding: 24px;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+
+        .top-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 24px;
+        }
+        .brand { display: flex; align-items: center; gap: 10px; }
+        .brand-mark {
+            width: 32px; height: 32px; background: var(--accent);
+            border-radius: 8px; display: flex; align-items: center;
+            justify-content: center; font-size: 14px; font-weight: 700; color: #fff;
+        }
+        .brand-name { font-size: 17px; font-weight: 700; color: var(--text-1); }
+        .top-actions { display: flex; gap: 10px; align-items: center; }
+        .btn-back {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 14px; border: 1px solid var(--border);
+            border-radius: 8px; background: var(--surface); color: var(--text-2);
+            font-size: 13px; font-weight: 500; text-decoration: none;
+        }
+        .btn-back:hover { border-color: var(--accent); color: var(--accent); }
+
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 24px;
+            box-shadow: var(--shadow); margin-bottom: 16px;
+        }
+        .card-title {
+            font-size: 15px; font-weight: 600; color: var(--text-1);
+            margin-bottom: 16px; padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .info-row {
+            display: flex; align-items: center; padding: 10px 0;
+            border-bottom: 1px solid var(--border-soft);
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { width: 120px; flex-shrink: 0; color: var(--text-3); font-size: 13px; }
+        .info-value { color: var(--text-1); font-size: 14px; font-weight: 500; }
+        .role-pill {
+            display: inline-block; padding: 3px 9px; border-radius: 20px;
+            font-size: 11.5px; font-weight: 600;
+            background: var(--green-bg); color: var(--green-text);
+        }
+
+        .form-group { margin-bottom: 14px; }
+        .form-label {
+            display: block; font-size: 13px; font-weight: 500;
+            color: var(--text-2); margin-bottom: 6px;
+        }
+        .form-input {
+            width: 100%; height: 38px; padding: 0 12px;
+            border: 1px solid var(--border); border-radius: 7px;
+            font-size: 13.5px; color: var(--text-1); font-family: inherit;
+            background: var(--bg); outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .form-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(21,112,239,.1);
+            background: #fff;
+        }
+
+        .btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            height: 36px; padding: 0 16px; border-radius: 7px;
+            font-size: 13px; font-weight: 500; font-family: inherit;
+            cursor: pointer; border: none;
+            transition: background .15s;
+        }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: #1264d3; }
+        .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+        .msg { font-size: 13px; margin-left: 12px; display: inline-block; }
+        .msg.ok  { color: var(--green-text); }
+        .msg.err { color: var(--red-text); }
+
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        thead th {
+            padding: 11px 14px; text-align: left;
+            font-size: 11.5px; font-weight: 600; color: var(--text-3);
+            text-transform: uppercase; letter-spacing: .5px;
+            background: var(--bg); border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        tbody td {
+            padding: 11px 14px; border-bottom: 1px solid var(--border-soft);
+            font-size: 13px;
+        }
+        tbody tr:last-child td { border-bottom: none; }
+        .mono {
+            font-family: 'SF Mono','JetBrains Mono','Consolas',monospace;
+            font-size: 12.5px; background: var(--bg); padding: 2px 7px; border-radius: 5px;
+        }
+        .tag {
+            display: inline-block; padding: 2px 8px; border-radius: 5px;
+            font-size: 12px; font-weight: 500;
+            background: var(--accent-dim); color: var(--accent-text);
+        }
+        .empty {
+            padding: 40px; text-align: center; color: var(--text-3);
+        }
+        .admin-note {
+            padding: 10px 14px; background: var(--orange-bg);
+            color: var(--orange-text); border-radius: 8px; font-size: 13px;
+        }
+        /* ══ HISTORY MOBILE CARD VIEW ══ */
+        .history-cards { display: none; }
+        .history-card-m {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+        }
+        .history-card-m-tracking {
+            font-family: 'SF Mono','JetBrains Mono','Consolas',monospace;
+            font-size: 12.5px; background: var(--surface); padding: 3px 8px;
+            border-radius: 5px; color: var(--text-1); display: inline-block;
+            margin-bottom: 8px; word-break: break-all;
+        }
+        .history-card-m-meta {
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+            font-size: 12px; color: var(--text-2); margin-bottom: 6px;
+        }
+        .history-card-m-time { font-size: 11.5px; color: var(--text-3); }
+
+        @media (max-width: 600px) {
+            body { padding: 16px; }
+            .card { padding: 16px; }
+            .info-label { width: 80px; font-size: 12px; }
+            .info-value { font-size: 13px; }
+        }
+        @media (max-width: 480px) {
+            .top-bar { flex-wrap: wrap; gap: 10px; }
+            .top-actions { width: 100%; }
+            .btn-back { width: 100%; justify-content: center; }
+
+            .form-input {
+                height: 44px;
+                font-size: 16px;
+            }
+            .btn {
+                width: 100%;
+                height: 44px;
+                justify-content: center;
+                font-size: 14px;
+            }
+            .msg { display: block; margin: 8px 0 0; }
+
+            /* swap table for cards */
+            #card-history .table-wrapper { display: none; }
+            .history-cards { display: block; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="top-bar">
+        <div class="brand">
+            <div class="brand-mark">S</div>
+            <span class="brand-name">个人中心</span>
+        </div>
+        <div class="top-actions">
+            <a class="btn-back" href="show.html">← 返回主页</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">基本信息</div>
+        <div class="info-row">
+            <div class="info-label">手机号</div>
+            <div class="info-value" id="info-phone">—</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">角色</div>
+            <div class="info-value"><span class="role-pill" id="info-role">—</span></div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">显示名称</div>
+            <div class="info-value" id="info-name">—</div>
+        </div>
+    </div>
+
+    <div class="card" id="card-password">
+        <div class="card-title">修改密码</div>
+        <div id="admin-warning" style="display:none" class="admin-note">
+            管理员账号为系统内置账号，不支持在此处修改密码。
+        </div>
+        <div id="password-form">
+            <div class="form-group">
+                <label class="form-label" for="old-password">当前密码</label>
+                <input class="form-input" type="password" id="old-password" placeholder="输入当前密码">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="new-password">新密码</label>
+                <input class="form-input" type="password" id="new-password" placeholder="至少 6 位">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="confirm-password">确认新密码</label>
+                <input class="form-input" type="password" id="confirm-password" placeholder="再次输入新密码">
+            </div>
+            <div style="margin-top: 16px;">
+                <button class="btn btn-primary" id="btn-change" onclick="changePassword()">修改密码</button>
+                <span class="msg" id="pwd-msg"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" id="card-history">
+        <div class="card-title">我的取件历史</div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>快递单号</th>
+                        <th>物品信息</th>
+                        <th>分类</th>
+                        <th>原位置</th>
+                        <th>入库时间</th>
+                    </tr>
+                </thead>
+                <tbody id="history-body">
+                    <tr><td colspan="5" class="empty">加载中…</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="history-cards" id="history-cards">
+            <div class="empty">加载中…</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const esc = s => s == null ? '' : String(s).replace(/[&<>"']/g,
+        c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+    function fmtDate(iso) {
+        if (!iso) return '—';
+        try {
+            const d = new Date(iso);
+            return isNaN(d) ? iso.slice(0, 19) : d.toLocaleString('zh-CN', { hour12: false });
+        } catch { return iso; }
+    }
+
+    async function init() {
+        try {
+            const d = await fetch('check_session.php').then(r => r.json());
+            if (!d.logged_in) { location.href = 'login.html'; return; }
+
+            document.getElementById('info-phone').textContent = d.phone || '（管理员账号）';
+            document.getElementById('info-name').textContent  = d.display_name || '—';
+            const rolePill = document.getElementById('info-role');
+            if (d.role === 'admin') {
+                rolePill.textContent = '管理员';
+                rolePill.style.background = 'rgba(245,158,11,.15)';
+                rolePill.style.color      = '#b54708';
+                document.getElementById('admin-warning').style.display = 'block';
+                document.getElementById('password-form').style.display = 'none';
+            } else {
+                rolePill.textContent = '普通用户';
+            }
+            loadHistory();
+        } catch {
+            location.href = 'login.html';
+        }
+    }
+
+    async function loadHistory() {
+        const tbody = document.getElementById('history-body');
+        const cards = document.getElementById('history-cards');
+        try {
+            const res = await fetch('get_shipments.php?status=1&limit=500');
+            if (res.status === 401) { location.href = 'login.html'; return; }
+            const data = await res.json();
+            if (!Array.isArray(data) || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty">暂无取件历史</td></tr>';
+                if (cards) cards.innerHTML = '<div class="empty">暂无取件历史</div>';
+                return;
+            }
+            tbody.innerHTML = data.map(r => `
+                <tr>
+                    <td><span class="mono">${esc(r.tracking_number || '—')}</span></td>
+                    <td>${esc(r.raw_text) || '—'}</td>
+                    <td><span class="tag">${esc(r.category || '未分类')}</span></td>
+                    <td>${esc(r.location || '—')} 号</td>
+                    <td>${fmtDate(r.created_at)}</td>
+                </tr>`).join('');
+            if (cards) {
+                cards.innerHTML = data.map(r => {
+                    const raw = r.raw_text ? String(r.raw_text) : '';
+                    const rawShort = raw.length > 30 ? raw.slice(0, 30) + '…' : raw;
+                    return `<div class="history-card-m">
+                        <div class="history-card-m-tracking">${esc(r.tracking_number || '—')}</div>
+                        <div class="history-card-m-meta">
+                            <span class="tag">${esc(r.category || '未分类')}</span>
+                            <span>位置 ${esc(String(r.location || '—'))} 号</span>
+                            ${rawShort ? `<span>${esc(rawShort)}</span>` : ''}
+                        </div>
+                        <div class="history-card-m-time">${fmtDate(r.created_at)}</div>
+                    </div>`;
+                }).join('');
+            }
+        } catch (e) {
+            tbody.innerHTML =
+                `<tr><td colspan="5" class="empty" style="color:var(--red-text)">加载失败：${esc(e.message)}</td></tr>`;
+            if (cards) cards.innerHTML =
+                `<div class="empty" style="color:var(--red-text)">加载失败：${esc(e.message)}</div>`;
+        }
+    }
+
+    async function changePassword() {
+        const oldPwd  = document.getElementById('old-password').value;
+        const newPwd  = document.getElementById('new-password').value;
+        const confirm = document.getElementById('confirm-password').value;
+        const btn     = document.getElementById('btn-change');
+        const msg     = document.getElementById('pwd-msg');
+
+        msg.textContent = '';
+
+        if (!oldPwd || !newPwd || !confirm) {
+            msg.textContent = '请填写所有字段'; msg.className = 'msg err'; return;
+        }
+        if (newPwd.length < 6) {
+            msg.textContent = '新密码至少 6 位'; msg.className = 'msg err'; return;
+        }
+        if (newPwd !== confirm) {
+            msg.textContent = '两次新密码不一致'; msg.className = 'msg err'; return;
+        }
+
+        btn.disabled    = true;
+        btn.textContent = '提交中…';
+        try {
+            const res = await fetch('change_password.php', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({
+                    old_password:     oldPwd,
+                    new_password:     newPwd,
+                    confirm_password: confirm,
+                }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                msg.textContent = '密码已修改，3 秒后跳转登录页…';
+                msg.className   = 'msg ok';
+                setTimeout(() => location.href = 'login.html', 3000);
+            } else {
+                msg.textContent = data.error || '修改失败';
+                msg.className   = 'msg err';
+            }
+        } catch (e) {
+            msg.textContent = '网络错误：' + e.message;
+            msg.className   = 'msg err';
+        } finally {
+            btn.disabled    = false;
+            btn.textContent = '修改密码';
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>

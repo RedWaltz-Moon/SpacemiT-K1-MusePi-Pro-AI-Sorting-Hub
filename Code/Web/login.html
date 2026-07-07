@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>速递智管 · 登录</title>
+    <link rel="stylesheet" href="theme.css">
+    <script src="theme.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', system-ui, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        /* Brand above card */
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+        .brand-mark {
+            width: 36px; height: 36px;
+            background: #1570ef;
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: 700; color: #fff;
+            letter-spacing: -.5px;
+        }
+        .brand-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #101828;
+            letter-spacing: -.3px;
+        }
+
+        /* Card */
+        .card {
+            width: 100%;
+            max-width: 400px;
+            background: #fff;
+            border: 1px solid #e4e7ec;
+            border-radius: 14px;
+            box-shadow: 0 4px 24px rgba(16,24,40,.07), 0 1px 3px rgba(16,24,40,.05);
+            padding: 32px;
+        }
+
+        .card-header {
+            position: relative;
+            margin-bottom: 6px;
+        }
+        .card-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #101828;
+        }
+        .query-link {
+            position: absolute;
+            top: 0; right: 0;
+            font-size: 12.5px;
+            color: #1570ef;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 3px 10px;
+            border: 1px solid rgba(21,112,239,.25);
+            border-radius: 20px;
+            background: #eff4ff;
+            transition: background .15s, border-color .15s;
+            white-space: nowrap;
+        }
+        .query-link:hover { background: #dbeafe; border-color: rgba(21,112,239,.5); }
+        .card-sub {
+            font-size: 13.5px;
+            color: #98a2b3;
+            margin-bottom: 28px;
+        }
+
+        /* Form */
+        .form-group { margin-bottom: 18px; }
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #344054;
+            margin-bottom: 6px;
+        }
+        .form-input {
+            width: 100%;
+            height: 40px;
+            padding: 0 14px;
+            border: 1px solid #d0d5dd;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #101828;
+            font-family: inherit;
+            background: #fff;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .form-input::placeholder { color: #98a2b3; }
+        .form-input:focus {
+            border-color: #1570ef;
+            box-shadow: 0 0 0 3px rgba(21,112,239,.1);
+        }
+
+        /* Error */
+        .error-msg {
+            display: none;
+            background: #fef3f2;
+            border: 1px solid #fecdca;
+            color: #b42318;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+
+        /* Submit */
+        .btn-submit {
+            width: 100%;
+            height: 40px;
+            background: #1570ef;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background .15s, transform .1s;
+            margin-top: 4px;
+        }
+        .btn-submit:hover    { background: #1264d3; }
+        .btn-submit:active   { transform: scale(.98); }
+        .btn-submit:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+        /* Divider + footer */
+        .divider {
+            border: none;
+            border-top: 1px solid #f0f2f5;
+            margin: 24px 0 20px;
+        }
+        .footer-link {
+            text-align: center;
+            font-size: 13.5px;
+            color: #667085;
+        }
+        .footer-link a {
+            color: #1570ef;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .footer-link a:hover { text-decoration: underline; }
+
+        /* Copyright */
+        .copyright {
+            margin-top: 24px;
+            font-size: 12px;
+            color: #c0c8d4;
+        }
+
+        /* ══ RESPONSIVE ══ */
+        @media (max-width: 480px) {
+            body {
+                padding: 16px;
+                justify-content: flex-start;
+                padding-top: 60px;
+            }
+            .brand {
+                margin-bottom: 20px;
+            }
+            .brand-mark {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+            .brand-name {
+                font-size: 18px;
+            }
+            .card {
+                padding: 24px 20px;
+                border-radius: 12px;
+            }
+            .card-header {
+                position: static;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 4px;
+            }
+            .query-link {
+                position: static;
+                font-size: 12px;
+                padding: 4px 10px;
+            }
+            .card-sub {
+                margin-bottom: 20px;
+            }
+            .form-group {
+                margin-bottom: 14px;
+            }
+            .form-input {
+                height: 44px;
+                font-size: 16px;
+            }
+            .btn-submit {
+                height: 44px;
+                font-size: 15px;
+            }
+            .copyright {
+                margin-top: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="brand">
+    <div class="brand-mark">S</div>
+    <span class="brand-name">速递智管</span>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">欢迎回来</div>
+        <a class="query-link" href="query.html">查我的包裹 →</a>
+    </div>
+    <div class="card-sub">登录您的账号以继续</div>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <div class="form-group">
+        <label class="form-label" for="account">账号</label>
+        <input class="form-input" type="text" id="account"
+               placeholder="手机号或管理员账号"
+               autocomplete="username" maxlength="20">
+    </div>
+    <div class="form-group">
+        <label class="form-label" for="password">密码</label>
+        <input class="form-input" type="password" id="password"
+               placeholder="输入密码"
+               autocomplete="current-password">
+    </div>
+
+    <button class="btn-submit" id="btn-login" onclick="doLogin()">登录</button>
+
+    <hr class="divider">
+    <div class="footer-link">没有账号？<a href="register.html">立即注册</a></div>
+    <div class="footer-link" style="margin-top:8px"><a href="forgot_password.html">忘记密码？</a></div>
+</div>
+
+<span class="copyright">© 2026 速递智管</span>
+
+<script>
+    fetch('check_session.php').then(r => r.json()).then(d => {
+        if (d.logged_in) location.href = 'show.html';
+    }).catch(() => {});
+
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+    async function doLogin() {
+        const account  = document.getElementById('account').value.trim();
+        const password = document.getElementById('password').value;
+        const btn      = document.getElementById('btn-login');
+        const errBox   = document.getElementById('error-msg');
+
+        errBox.style.display = 'none';
+        if (!account || !password) { showError('请填写账号和密码'); return; }
+
+        btn.disabled    = true;
+        btn.textContent = '登录中…';
+        try {
+            const res  = await fetch('login.php', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ account, password }),
+            });
+            const data = await res.json();
+            if (data.success) location.href = 'show.html';
+            else showError(data.error || '账号或密码错误');
+        } catch {
+            showError('网络错误，请检查服务器连接');
+        } finally {
+            btn.disabled    = false;
+            btn.textContent = '登录';
+        }
+    }
+
+    function showError(msg) {
+        const el = document.getElementById('error-msg');
+        el.textContent   = msg;
+        el.style.display = 'block';
+    }
+</script>
+</body>
+</html>

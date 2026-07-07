@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>速递智管 · 注册</title>
+    <link rel="stylesheet" href="theme.css">
+    <script src="theme.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', system-ui, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+        .brand-mark {
+            width: 36px; height: 36px;
+            background: #1570ef;
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: 700; color: #fff;
+        }
+        .brand-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #101828;
+            letter-spacing: -.3px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 400px;
+            background: #fff;
+            border: 1px solid #e4e7ec;
+            border-radius: 14px;
+            box-shadow: 0 4px 24px rgba(16,24,40,.07), 0 1px 3px rgba(16,24,40,.05);
+            padding: 32px;
+        }
+
+        .card-title { font-size: 17px; font-weight: 600; color: #101828; margin-bottom: 6px; }
+        .card-sub   { font-size: 13.5px; color: #98a2b3; margin-bottom: 28px; }
+
+        .form-group { margin-bottom: 18px; }
+        .form-label {
+            display: block;
+            font-size: 13px; font-weight: 500; color: #344054;
+            margin-bottom: 6px;
+        }
+        .form-input {
+            width: 100%; height: 40px; padding: 0 14px;
+            border: 1px solid #d0d5dd; border-radius: 8px;
+            font-size: 14px; color: #101828; font-family: inherit;
+            background: #fff; outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .form-input::placeholder { color: #98a2b3; }
+        .form-input:focus {
+            border-color: #1570ef;
+            box-shadow: 0 0 0 3px rgba(21,112,239,.1);
+        }
+        .form-input.valid   { border-color: #12b76a; }
+        .form-input.invalid { border-color: #f04438; }
+
+        .field-hint { font-size: 12px; color: #98a2b3; margin-top: 5px; }
+
+        .error-msg, .success-msg {
+            display: none;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+        .error-msg   { background: #fef3f2; border: 1px solid #fecdca; color: #b42318; }
+        .success-msg { background: #ecfdf3; border: 1px solid #a9efc5; color: #027a48; }
+
+        .btn-submit {
+            width: 100%; height: 40px;
+            background: #1570ef; color: #fff;
+            border: none; border-radius: 8px;
+            font-size: 14px; font-weight: 600; font-family: inherit;
+            cursor: pointer; margin-top: 4px;
+            transition: background .15s, transform .1s;
+        }
+        .btn-submit:hover    { background: #1264d3; }
+        .btn-submit:active   { transform: scale(.98); }
+        .btn-submit:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+        .divider { border: none; border-top: 1px solid #f0f2f5; margin: 24px 0 20px; }
+        .footer-link { text-align: center; font-size: 13.5px; color: #667085; }
+        .footer-link a { color: #1570ef; text-decoration: none; font-weight: 500; }
+        .footer-link a:hover { text-decoration: underline; }
+
+        .copyright { margin-top: 24px; font-size: 12px; color: #c0c8d4; }
+
+        .captcha-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .captcha-row .form-input {
+            flex: 1;
+            min-width: 0;
+        }
+        .captcha-img {
+            height: 40px;
+            border-radius: 8px;
+            border: 1px solid #d0d5dd;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .captcha-hint {
+            font-size: 11px;
+            color: #98a2b3;
+            margin-top: 4px;
+        }
+
+        /* ══ RESPONSIVE ══ */
+        @media (max-width: 480px) {
+            body {
+                padding: 16px;
+                justify-content: flex-start;
+                padding-top: 40px;
+            }
+            .brand {
+                margin-bottom: 20px;
+            }
+            .brand-mark {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+            .brand-name {
+                font-size: 18px;
+            }
+            .card {
+                padding: 24px 20px;
+                border-radius: 12px;
+            }
+            .card-title {
+                font-size: 16px;
+            }
+            .card-sub {
+                margin-bottom: 20px;
+            }
+            .form-group {
+                margin-bottom: 14px;
+            }
+            .form-input {
+                height: 44px;
+                font-size: 16px;
+            }
+            .captcha-row .form-input {
+                height: 44px;
+            }
+            .captcha-img {
+                height: 44px;
+                width: 100px;
+            }
+            .btn-submit {
+                height: 44px;
+                font-size: 15px;
+            }
+            .copyright {
+                margin-top: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="brand">
+    <div class="brand-mark">S</div>
+    <span class="brand-name">速递智管</span>
+</div>
+
+<div class="card">
+    <div class="card-title">创建账号</div>
+    <div class="card-sub">使用手机号注册，登录后可查看您的包裹</div>
+
+    <div class="error-msg"   id="error-msg"></div>
+    <div class="success-msg" id="success-msg"></div>
+
+    <div class="form-group">
+        <label class="form-label" for="phone">手机号</label>
+        <input class="form-input" type="tel" id="phone"
+               placeholder="请输入 11 位手机号" maxlength="11" inputmode="numeric">
+        <div class="field-hint">登录账号即为手机号，系统将匹配您手机号对应的包裹</div>
+    </div>
+    <div class="form-group">
+        <label class="form-label" for="password">密码</label>
+        <input class="form-input" type="password" id="password" placeholder="至少 6 位">
+    </div>
+    <div class="form-group">
+        <label class="form-label" for="confirm">确认密码</label>
+        <input class="form-input" type="password" id="confirm" placeholder="再次输入密码">
+    </div>
+
+    <div class="form-group">
+        <label class="form-label" for="captcha">验证码</label>
+        <div class="captcha-row">
+            <input class="form-input" type="text" id="captcha"
+                   placeholder="请输入计算结果" maxlength="6" inputmode="numeric" autocomplete="off">
+            <img class="captcha-img" id="captcha-img" src="captcha.php" alt="验证码"
+                 title="点击刷新" onclick="refreshCaptcha()">
+        </div>
+        <div class="captcha-hint">看不清？点击图片刷新</div>
+    </div>
+
+    <button class="btn-submit" id="btn-register" onclick="doRegister()">注册</button>
+
+    <hr class="divider">
+    <div class="footer-link">已有账号？<a href="login.html">返回登录</a></div>
+</div>
+
+<span class="copyright">© 2026 速递智管</span>
+
+<script>
+    const phoneInput   = document.getElementById('phone');
+    const pwInput      = document.getElementById('password');
+    const confirmInput = document.getElementById('confirm');
+    const captchaInput = document.getElementById('captcha');
+
+    function refreshCaptcha() {
+        document.getElementById('captcha-img').src = 'captcha.php?t=' + Date.now();
+        captchaInput.value = '';
+        captchaInput.className = 'form-input';
+    }
+
+    phoneInput.addEventListener('input', () => {
+        const v = phoneInput.value;
+        phoneInput.className = 'form-input' + (v.length === 0 ? '' : /^1[3-9]\d{9}$/.test(v) ? ' valid' : ' invalid');
+    });
+
+    confirmInput.addEventListener('input', () => {
+        const v = confirmInput.value;
+        confirmInput.className = 'form-input' + (v.length === 0 ? '' : v === pwInput.value ? ' valid' : ' invalid');
+    });
+
+    async function doRegister() {
+        const phone    = phoneInput.value.trim();
+        const password = pwInput.value;
+        const confirm  = confirmInput.value;
+        const captcha  = captchaInput.value.trim();
+        const btn      = document.getElementById('btn-register');
+
+        hideMessages();
+
+        if (!phone || !password || !confirm) { showError('请填写所有字段'); return; }
+        if (!/^1[3-9]\d{9}$/.test(phone))   { showError('请输入有效的 11 位手机号'); return; }
+        if (password.length < 6)             { showError('密码至少 6 位'); return; }
+        if (password !== confirm)            { showError('两次密码不一致'); return; }
+        if (!captcha)                        { showError('请输入验证码'); return; }
+
+        btn.disabled    = true;
+        btn.textContent = '注册中…';
+        try {
+            const res  = await fetch('register.php', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ phone, password, confirm_password: confirm, captcha }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                showSuccess('注册成功！3 秒后跳转登录页…');
+                setTimeout(() => location.href = 'login.html', 3000);
+            } else {
+                showError(data.error || '注册失败');
+                if (data.refresh_captcha) refreshCaptcha();
+            }
+        } catch {
+            showError('网络错误，请检查服务器连接');
+        } finally {
+            btn.disabled    = false;
+            btn.textContent = '注册';
+        }
+    }
+
+    function showError(msg) {
+        const el = document.getElementById('error-msg');
+        el.textContent = msg; el.style.display = 'block';
+    }
+    function showSuccess(msg) {
+        const el = document.getElementById('success-msg');
+        el.textContent = msg; el.style.display = 'block';
+    }
+    function hideMessages() {
+        document.getElementById('error-msg').style.display   = 'none';
+        document.getElementById('success-msg').style.display = 'none';
+    }
+</script>
+</body>
+</html>

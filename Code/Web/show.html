@@ -1,0 +1,2430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>速递智管 · 包裹监控</title>
+    <link rel="stylesheet" href="theme.css">
+    <script src="theme.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --bg:          #f0f2f5;
+            --surface:     #ffffff;
+            --border:      #e4e7ec;
+            --border-soft: #f0f2f5;
+            --text-1:      #101828;
+            --text-2:      #475467;
+            --text-3:      #98a2b3;
+            --accent:      #1570ef;
+            --accent-dim:  #eff4ff;
+            --accent-text: #1d4ed8;
+            --green:       #12b76a;
+            --green-bg:    #ecfdf3;
+            --green-text:  #027a48;
+            --orange:      #f79009;
+            --orange-bg:   #fffaeb;
+            --orange-text: #b54708;
+            --red:         #f04438;
+            --red-bg:      #fef3f2;
+            --red-text:    #b42318;
+            --header-h:    56px;
+            --radius:      10px;
+            --shadow:      0 1px 3px rgba(16,24,40,.08), 0 1px 2px rgba(16,24,40,.04);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text-1);
+            font-size: 14px;
+            line-height: 1.5;
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        /* ══ HEADER ══ */
+        .app-header {
+            position: sticky; top: 0; z-index: 100;
+            height: var(--header-h);
+            background: #101828;
+            display: flex; align-items: center;
+            padding: 0 24px;
+        }
+        .brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .brand-mark {
+            width: 28px; height: 28px;
+            background: var(--accent); border-radius: 7px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700; color: #fff;
+        }
+        .brand-name { color: #fff; font-size: 15px; font-weight: 600; letter-spacing: -.2px; }
+
+        .header-tabs { display: flex; align-items: center; gap: 2px; margin-left: 36px; height: 100%; }
+        .htab {
+            height: 32px; padding: 0 14px;
+            border: none; border-radius: 7px;
+            background: transparent; color: rgba(255,255,255,.55);
+            font-size: 13.5px; font-weight: 500; font-family: inherit;
+            cursor: pointer; white-space: nowrap;
+            transition: background .15s, color .15s;
+        }
+        .htab:hover  { background: rgba(255,255,255,.08); color: #fff; }
+        .htab.active { background: rgba(255,255,255,.12); color: #fff; }
+
+        .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+        .user-name { color: rgba(255,255,255,.75); font-size: 13px; }
+        .role-pill {
+            padding: 3px 9px; border-radius: 20px;
+            font-size: 11.5px; font-weight: 600; letter-spacing: .2px;
+        }
+        .role-admin { background: rgba(245,158,11,.2);  color: #fbbf24; border: 1px solid rgba(245,158,11,.3); }
+        .role-user  { background: rgba(16,185,129,.18); color: #6ee7b7; border: 1px solid rgba(16,185,129,.25); }
+        .btn-logout {
+            height: 30px; padding: 0 12px;
+            border: 1px solid rgba(255,255,255,.18); border-radius: 7px;
+            background: transparent; color: rgba(255,255,255,.65);
+            font-size: 13px; font-family: inherit; cursor: pointer;
+            transition: border-color .15s, color .15s;
+        }
+        .btn-logout:hover { border-color: rgba(255,255,255,.4); color: #fff; }
+
+        /* ══ PAGES ══ */
+        .page { display: none; padding: 24px; max-width: 1400px; margin: 0 auto; }
+        .page.active { display: block; }
+
+        /* ══ BUTTONS ══ */
+        .btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            height: 32px; padding: 0 14px; border-radius: 7px;
+            font-size: 13px; font-weight: 500; font-family: inherit;
+            cursor: pointer; white-space: nowrap;
+            transition: background .15s, border-color .15s, color .15s;
+        }
+        .btn:active { transform: scale(.97); }
+        .btn-ghost {
+            border: 1px solid var(--border);
+            background: var(--surface); color: var(--text-2);
+        }
+        .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-primary {
+            border: none;
+            background: var(--accent); color: #fff;
+        }
+        .btn-primary:hover   { background: #1264d3; }
+        .btn-primary:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+        /* ══ STAT CARDS ══ */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px; margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            box-shadow: var(--shadow);
+        }
+        .stat-label {
+            font-size: 12px; font-weight: 500; color: var(--text-3);
+            text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px;
+        }
+        .stat-value {
+            font-size: 26px; font-weight: 700;
+            color: var(--text-1); line-height: 1; letter-spacing: -.5px;
+        }
+        .stat-sub { font-size: 12px; color: var(--text-3); margin-top: 5px; }
+        .stat-card.accent .stat-value { color: var(--accent); }
+        .stat-card.green  .stat-value { color: var(--green-text); }
+        .stat-card.orange .stat-value { color: var(--orange-text); }
+
+        /* ══ SECTION HEADER ══ */
+        .section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .section-title { font-size: 13.5px; font-weight: 600; }
+        .section-hint  { font-size: 12px; color: var(--text-3); }
+
+        /* ══ SHELF MAP ══ */
+        .shelf-layout {
+            display: grid; grid-template-columns: 1fr 40px 1fr;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow); overflow: hidden;
+        }
+        .shelf-side { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+        .shelf-side-label {
+            font-size: 11px; font-weight: 600; color: var(--text-3);
+            text-transform: uppercase; letter-spacing: 1px;
+            padding-bottom: 8px; border-bottom: 1px solid var(--border-soft);
+        }
+        .shelf-aisle {
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg);
+            border-left: 1px dashed var(--border);
+            border-right: 1px dashed var(--border);
+        }
+        .shelf-aisle span {
+            writing-mode: vertical-rl;
+            font-size: 11px; font-weight: 500; color: var(--text-3); letter-spacing: 3px;
+        }
+        .shelf-card {
+            border: 1.5px solid var(--border); border-radius: 8px;
+            padding: 11px 14px; background: #fff; cursor: pointer;
+            transition: border-color .15s, box-shadow .15s, background .15s;
+        }
+        .shelf-card:hover  { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(21,112,239,.08); }
+        .shelf-card.active { border-color: var(--accent); background: var(--accent-dim); box-shadow: 0 0 0 3px rgba(21,112,239,.12); }
+        .shelf-card.empty  { opacity: .45; cursor: default; pointer-events: none; }
+        .shelf-card-top {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+        }
+        .shelf-num { font-size: 13.5px; font-weight: 600; }
+        .shelf-badge {
+            font-size: 11.5px; font-weight: 600;
+            padding: 2px 8px; border-radius: 20px;
+            background: var(--green-bg); color: var(--green-text);
+        }
+        .shelf-badge.zero { background: var(--border-soft); color: var(--text-3); }
+        .shelf-bar-track { height: 5px; background: var(--border-soft); border-radius: 3px; overflow: hidden; }
+        .shelf-bar-fill  { height: 100%; background: var(--green); border-radius: 3px; transition: width .4s ease; }
+        .shelf-card.active .shelf-bar-fill { background: var(--accent); }
+
+        /* ══ TOOLBAR ══ */
+        .list-toolbar {
+            background: var(--surface);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 12px 16px; margin-bottom: 16px;
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+            box-shadow: var(--shadow);
+        }
+        .search-box { position: relative; flex: 1; min-width: 200px; max-width: 360px; }
+        .search-box svg {
+            position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+            color: var(--text-3); pointer-events: none;
+        }
+        .search-box input {
+            width: 100%; height: 34px; padding: 0 32px 0 34px;
+            border: 1px solid var(--border); border-radius: 7px;
+            font-size: 13.5px; color: var(--text-1); font-family: inherit;
+            background: var(--bg); outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .search-box input::placeholder { color: var(--text-3); }
+        .search-box input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(21,112,239,.1);
+            background: #fff;
+        }
+        .search-clear {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            width: 18px; height: 18px; border: none; border-radius: 50%;
+            background: var(--text-3); color: #fff;
+            font-size: 10px; cursor: pointer; display: none;
+        }
+        .filter-tag {
+            display: none; align-items: center; gap: 5px;
+            height: 28px; padding: 0 10px; border-radius: 20px;
+            background: var(--accent-dim); color: var(--accent-text);
+            font-size: 12.5px; font-weight: 500;
+        }
+        .filter-tag button {
+            border: none; background: none;
+            color: var(--accent-text); font-size: 14px; font-weight: 600;
+            padding: 0 0 0 2px; cursor: pointer;
+        }
+        .toolbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+        .stats-text { font-size: 12.5px; color: var(--text-3); white-space: nowrap; }
+
+        /* ══ TABLE ══ */
+        .table-card {
+            background: var(--surface);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            box-shadow: var(--shadow); overflow: hidden;
+        }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        thead th {
+            padding: 11px 16px; text-align: left;
+            font-size: 11.5px; font-weight: 600; color: var(--text-3);
+            text-transform: uppercase; letter-spacing: .5px;
+            background: var(--bg); border-bottom: 1px solid var(--border);
+            white-space: nowrap; user-select: none; cursor: pointer;
+        }
+        thead th:hover { color: var(--text-2); }
+        thead th.sort-asc::after  { content: ' ↑'; color: var(--accent); }
+        thead th.sort-desc::after { content: ' ↓'; color: var(--accent); }
+        thead th.no-sort { cursor: default; }
+        thead th.no-sort:hover { color: var(--text-3); }
+        tbody td {
+            padding: 12px 16px; border-bottom: 1px solid var(--border-soft);
+            vertical-align: middle; font-size: 13.5px;
+        }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover td { background: #fafbff; }
+        tbody tr.row-shelf-active td { background: var(--accent-dim); }
+        tbody tr.row-hidden { display: none; }
+
+        .mono {
+            font-family: 'SF Mono','JetBrains Mono','Consolas',monospace;
+            font-size: 12.5px; background: var(--bg); padding: 2px 7px; border-radius: 5px;
+        }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 12px; font-weight: 500; }
+        .tag-location { background: var(--orange-bg); color: var(--orange-text); }
+        .tag-category { background: var(--accent-dim); color: var(--accent-text); }
+
+        .duration-badge {
+            display: inline-block; padding: 2px 9px; border-radius: 5px;
+            font-size: 12px; font-weight: 600;
+            font-family: 'SF Mono', monospace;
+            background: var(--green-bg); color: var(--green-text);
+        }
+        .duration-badge.warn { background: var(--orange-bg); color: var(--orange-text); }
+        .duration-badge.err  { background: var(--red-bg);    color: var(--red-text); }
+
+        .raw-text-cell {
+            max-width: 200px; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; color: var(--text-2);
+        }
+        .time-text { font-size: 12.5px; color: var(--text-2); white-space: nowrap; }
+        .id-cell   { font-size: 12px; color: var(--text-3); }
+
+        /* ══ ANALYTICS ══ */
+        .analytics-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;
+        }
+        .chart-card {
+            background: var(--surface);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            box-shadow: var(--shadow); padding: 20px;
+        }
+        .chart-title { font-size: 13px; font-weight: 600; margin-bottom: 16px; }
+
+        .bar-list { display: flex; flex-direction: column; gap: 10px; }
+        .bar-item  { display: flex; align-items: center; gap: 10px; }
+        .bar-label { font-size: 12.5px; color: var(--text-2); width: 80px; flex-shrink: 0; }
+        .bar-track { flex: 1; height: 8px; background: var(--border-soft); border-radius: 4px; overflow: hidden; }
+        .bar-fill  { height: 100%; border-radius: 4px; transition: width .5s ease; }
+        .bar-val   { font-size: 12px; color: var(--text-3); width: 28px; text-align: right; flex-shrink: 0; }
+
+        .bucket-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+        .bucket { border-radius: 8px; padding: 14px 10px; text-align: center; }
+        .bucket-count { font-size: 24px; font-weight: 700; line-height: 1; }
+        .bucket-label { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+        .bucket.c-fresh { background: var(--green-bg);  }
+        .bucket.c-fresh .bucket-count { color: var(--green-text); }
+        .bucket.c-ok    { background: var(--accent-dim); }
+        .bucket.c-ok    .bucket-count { color: var(--accent-text); }
+        .bucket.c-warn  { background: var(--orange-bg); }
+        .bucket.c-warn  .bucket-count { color: var(--orange-text); }
+        .bucket.c-stale { background: var(--red-bg);    }
+        .bucket.c-stale .bucket-count { color: var(--red-text); }
+
+        /* ══ ENTRY FORM ══ */
+        .form-card {
+            background: var(--surface);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            box-shadow: var(--shadow); padding: 24px; max-width: 640px;
+        }
+        .form-card-title { font-size: 15px; font-weight: 600; margin-bottom: 20px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group.span2 { grid-column: 1 / -1; }
+        .form-label { font-size: 12.5px; font-weight: 500; color: var(--text-2); }
+        .form-input {
+            height: 36px; padding: 0 12px;
+            border: 1px solid var(--border); border-radius: 7px;
+            font-size: 13.5px; color: var(--text-1); font-family: inherit;
+            background: var(--bg); outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .form-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(21,112,239,.1);
+            background: #fff;
+        }
+        select.form-input { cursor: pointer; }
+        .form-actions { margin-top: 20px; display: flex; align-items: center; gap: 12px; }
+        .form-msg { font-size: 13px; }
+        .form-msg.ok  { color: var(--green-text); }
+        .form-msg.err { color: var(--red-text); }
+
+        /* ══ STATUS BAR ══ */
+        .status-bar {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+            background: rgba(240,242,245,.92); backdrop-filter: blur(8px);
+            border-top: 1px solid var(--border);
+            padding: 8px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 12px; color: var(--text-3);
+        }
+        .status-bar button {
+            border: none; background: none;
+            color: var(--accent); font-size: 12px; font-family: inherit; cursor: pointer;
+        }
+        .status-dot {
+            display: inline-block; width: 6px; height: 6px;
+            background: var(--green); border-radius: 50%;
+            margin-right: 6px; vertical-align: middle;
+        }
+
+        /* ══ MISC ══ */
+        .loading-row td { padding: 60px 24px; text-align: center; color: var(--text-3); }
+        .error-banner {
+            margin: 16px; padding: 11px 16px;
+            background: var(--red-bg); border: 1px solid #fecdca;
+            border-radius: 8px; color: var(--red-text); font-size: 13px;
+        }
+
+        /* ══ RESPONSIVE ══ */
+        @media (max-width: 900px) {
+            .stats-row     { grid-template-columns: repeat(2,1fr); }
+            .analytics-grid{ grid-template-columns: 1fr; }
+            /* grid items default to min-width:auto and expand to fit content;
+               set 0 so overflow-x:auto on trend-bars actually triggers */
+            .analytics-grid > * { min-width: 0; }
+        }
+        @media (max-width: 768px) {
+            .page { padding: 16px; }
+            .header-tabs { margin-left: 16px; }
+            .stats-row  { gap: 10px; }
+            .form-grid  { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 500px) {
+            .stats-row  { grid-template-columns: 1fr; }
+            .bucket-row { grid-template-columns: repeat(2,1fr); }
+        }
+        @media (max-width: 480px) {
+            .app-header {
+                padding: 0 12px;
+                height: auto;
+                min-height: 48px;
+                flex-wrap: wrap;
+            }
+            .header-tabs {
+                width: 100%;
+                overflow-x: auto;
+                margin-left: 0;
+                padding: 8px 0;
+                gap: 4px;
+                -webkit-overflow-scrolling: touch;
+            }
+            .htab {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+            .header-right {
+                margin-top: 4px;
+                margin-bottom: 8px;
+            }
+            .user-name { font-size: 11px; }
+            .role-pill { font-size: 10px; padding: 2px 6px; }
+            .btn-logout { font-size: 11px; padding: 0 8px; height: 24px; }
+
+            .page { padding: 12px; }
+
+            .list-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 12px;
+            }
+            .search-box {
+                max-width: 100%;
+                min-width: 100%;
+            }
+            .toolbar-right {
+                margin-left: 0;
+                justify-content: flex-end;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-top: 8px;
+            }
+            .filter-tag {
+                align-self: flex-start;
+            }
+
+            .table-wrapper {
+                margin: 0 -12px;
+                padding: 0 12px;
+            }
+            table {
+                min-width: 700px;
+            }
+            thead th {
+                padding: 8px 10px;
+                font-size: 10px;
+            }
+            tbody td {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+            .mono {
+                font-size: 11px;
+            }
+            .tag {
+                font-size: 10px;
+                padding: 1px 5px;
+            }
+            .duration-badge {
+                font-size: 10px;
+                padding: 1px 5px;
+            }
+            .time-text {
+                font-size: 11px;
+            }
+            .id-cell {
+                font-size: 10px;
+            }
+            .raw-text-cell {
+                max-width: 120px;
+                font-size: 11px;
+            }
+            .btn-action {
+                padding: 0 6px;
+                font-size: 10px;
+                height: 22px;
+            }
+
+            .form-card {
+                padding: 16px;
+            }
+            .form-card-title {
+                font-size: 14px;
+            }
+            .form-input {
+                height: 34px;
+                font-size: 13px;
+            }
+            .form-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .btn-primary {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .modal {
+                max-width: 100%;
+                margin: 12px;
+            }
+            .modal-header {
+                padding: 14px 16px;
+            }
+            .modal-body {
+                padding: 16px;
+            }
+            .modal-footer {
+                padding: 12px 16px;
+                flex-wrap: wrap;
+            }
+
+            .status-bar {
+                padding: 6px 12px;
+                font-size: 11px;
+            }
+
+            .brand-mark {
+                width: 24px;
+                height: 24px;
+                font-size: 11px;
+            }
+
+            .stat-card {
+                padding: 14px 16px;
+            }
+            .stat-value {
+                font-size: 22px;
+            }
+            .stat-label {
+                font-size: 11px;
+            }
+
+            /* taken date filter: stack vertically */
+            #taken-date-filter {
+                flex-direction: column;
+                align-items: stretch !important;
+                width: 100%;
+                gap: 6px !important;
+            }
+            #taken-date-filter input[type="date"] {
+                width: 100%;
+                height: 40px;
+                font-size: 15px;
+                padding: 0 10px;
+            }
+            #taken-date-filter span {
+                display: none;
+            }
+            #taken-date-filter .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            /* import section */
+            .import-actions { flex-wrap: wrap; }
+            .drop-zone { padding: 20px 12px; }
+
+            /* analytics charts: prevent flex shrink so overflow-x scroll actually triggers */
+            .trend-bars {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 2px;
+            }
+            .trend-col {
+                flex: none;       /* don't shrink — let chart scroll instead */
+                min-width: 36px;  /* floor so bars never become invisible slivers */
+            }
+
+            /* taken mobile card */
+            .taken-card-m { padding: 12px 14px; }
+        }
+
+        /* ══ EDIT MODAL ══ */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; z-index: 200;
+            background: rgba(16,24,40,.5);
+            align-items: center; justify-content: center; padding: 24px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); width: 100%; max-width: 520px;
+            box-shadow: 0 20px 48px rgba(16,24,40,.15); overflow: hidden;
+        }
+        .modal-header {
+            padding: 18px 24px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .modal-title { font-size: 15px; font-weight: 600; }
+        .modal-close {
+            width: 28px; height: 28px; border: none; border-radius: 6px;
+            background: transparent; color: var(--text-3);
+            font-size: 18px; cursor: pointer; line-height: 28px; text-align: center;
+            transition: background .15s;
+        }
+        .modal-close:hover { background: var(--bg); color: var(--text-1); }
+        .modal-body   { padding: 24px; }
+        .modal-footer {
+            padding: 16px 24px; border-top: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+        }
+        .modal-footer .form-msg { margin-right: auto; }
+
+        /* ══ ROW EXPAND ══ */
+        tbody tr.data-row { cursor: pointer; }
+        .detail-row { display: none; }
+        .detail-row.open { display: table-row; }
+        .detail-row > td {
+            background: var(--accent-dim) !important;
+            padding: 12px 16px 14px 28px;
+            border-bottom: 1px solid var(--border-soft);
+        }
+        .detail-grid { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
+        .detail-item { display: flex; flex-direction: column; gap: 3px; }
+        .detail-item-label { font-size: 11px; color: var(--text-3); font-weight: 500; text-transform: uppercase; letter-spacing: .4px; }
+        .detail-item-val   { font-size: 13px; color: var(--text-1); }
+
+        /* ══ ACTION BUTTONS ══ */
+        .btn-action {
+            height: 26px; padding: 0 10px; border-radius: 6px;
+            font-size: 12px; font-weight: 500; font-family: inherit;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+            transition: background .15s, border-color .15s, color .15s;
+        }
+        .btn-edit   { border: 1px solid var(--border); background: var(--surface); color: var(--text-2); }
+        .btn-edit:hover   { border-color: var(--accent); color: var(--accent); }
+        .btn-delete { border: 1px solid #fecdca; background: var(--red-bg); color: var(--red-text); }
+        .btn-delete:hover { background: #fee4e2; }
+        td.action-cell { white-space: nowrap; }
+
+        /* ══ CSV IMPORT ══ */
+        .import-toggle {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13.5px; font-weight: 600; color: var(--text-1);
+            cursor: pointer; user-select: none;
+            margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);
+        }
+        .import-toggle::after { content: '▶'; font-size: 10px; color: var(--text-3); transition: transform .2s; margin-left: 4px; }
+        .import-toggle.open::after { transform: rotate(90deg); }
+        .import-body { display: none; margin-top: 16px; }
+        .import-body.open { display: block; }
+        .csv-hint { font-size: 12px; color: var(--text-3); margin-bottom: 12px; line-height: 1.7; }
+        .csv-hint code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-family: 'SF Mono',monospace; font-size: 11.5px; }
+        .drop-zone {
+            border: 1.5px dashed var(--border); border-radius: 8px;
+            padding: 28px 16px; text-align: center; cursor: pointer;
+            transition: border-color .15s, background .15s; margin-bottom: 12px;
+        }
+        .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); background: var(--accent-dim); }
+        .drop-zone p { font-size: 13px; color: var(--text-3); }
+        .drop-zone p strong { color: var(--accent); }
+        .import-actions { margin-top: 12px; display: flex; align-items: center; gap: 10px; }
+        .import-msg { font-size: 13px; }
+        .import-msg.ok  { color: var(--green-text); }
+        .import-msg.err { color: var(--red-text); }
+        .import-preview .table-card table { min-width: 500px; }
+        .import-preview thead th { font-size: 11px; padding: 9px 12px; }
+        .import-preview tbody td { font-size: 12.5px; padding: 8px 12px; }
+        tr.row-ok td { background: var(--green-bg) !important; }
+        tr.row-err td { background: var(--red-bg)   !important; }
+
+        /* ══ TAKEN RECORDS MOBILE CARD VIEW ══ */
+        .taken-cards { display: none; }
+        .taken-card-m {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            box-shadow: var(--shadow);
+        }
+        .taken-card-m.hidden { display: none; }
+        .taken-card-m-top {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .taken-card-m-id { font-size: 11px; color: var(--text-3); }
+        .taken-card-m-tracking {
+            font-family: 'SF Mono','JetBrains Mono','Consolas',monospace;
+            font-size: 13px; background: var(--bg); padding: 3px 8px;
+            border-radius: 5px; color: var(--text-1); display: inline-block;
+            margin-bottom: 8px; word-break: break-all;
+        }
+        .taken-card-m-meta {
+            display: flex; flex-wrap: wrap; gap: 8px;
+            font-size: 12px; color: var(--text-2); margin-bottom: 6px;
+        }
+        .taken-card-m-meta span { display: flex; align-items: center; gap: 4px; }
+        .taken-card-m-time {
+            font-size: 11.5px; color: var(--text-3);
+            padding-top: 8px; border-top: 1px solid var(--border-soft);
+        }
+
+        /* ══ MOBILE CARD VIEW ══ */
+        .pkg-cards { display: none; }
+        .pkg-card-m {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            box-shadow: var(--shadow);
+        }
+        .pkg-card-m.hidden { display: none; }
+        .pkg-card-m-top {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .pkg-card-m-id {
+            font-size: 11px; color: var(--text-3);
+        }
+        .pkg-card-m-loc {
+            font-size: 12px; font-weight: 600;
+            padding: 2px 8px; border-radius: 20px;
+            background: var(--orange-bg); color: var(--orange-text);
+        }
+        .pkg-card-m-tracking {
+            font-family: 'SF Mono','JetBrains Mono','Consolas',monospace;
+            font-size: 13px; background: var(--bg); padding: 3px 8px;
+            border-radius: 5px; color: var(--text-1); display: inline-block;
+            margin-bottom: 8px; word-break: break-all;
+        }
+        .pkg-card-m-meta {
+            display: flex; flex-wrap: wrap; gap: 8px;
+            font-size: 12px; color: var(--text-2); margin-bottom: 8px;
+        }
+        .pkg-card-m-meta span {
+            display: flex; align-items: center; gap: 4px;
+        }
+        .pkg-card-m-phone {
+            font-size: 12px; color: var(--text-3);
+            padding-top: 8px; border-top: 1px solid var(--border-soft);
+        }
+        .pkg-card-m-actions {
+            display: flex; gap: 8px; margin-top: 8px;
+        }
+        .pkg-cards-sort {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 12px; padding: 10px 14px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); font-size: 13px;
+        }
+        .pkg-cards-sort span { color: var(--text-3); }
+        .pkg-cards-sort button {
+            padding: 4px 12px; border: 1px solid var(--border);
+            border-radius: 6px; background: var(--surface);
+            color: var(--text-2); font-size: 12px; font-family: inherit;
+            cursor: pointer; transition: all .15s;
+        }
+        .pkg-cards-sort button:hover { border-color: var(--accent); color: var(--accent); }
+        .pkg-cards-sort button.active {
+            background: var(--accent-dim); border-color: var(--accent);
+            color: var(--accent-text);
+        }
+        @media (max-width: 680px) {
+            #page-packages .table-card { display: none; }
+            #page-taken    .table-card { display: none; }
+            #page-anomaly  .table-card { display: none; }
+            .pkg-cards     { display: block; }
+            .taken-cards   { display: block; }
+            .anomaly-cards { display: block; }
+        }
+
+        /* ══ TREND CHART ══ */
+        .trend-bars { display: flex; align-items: flex-end; gap: 6px; height: 110px; }
+        .trend-col  { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; }
+        .trend-count    { font-size: 11px; color: var(--text-3); min-height: 16px; }
+        .trend-bar-wrap { flex: 1; width: 100%; display: flex; align-items: flex-end; padding: 0 2px; }
+        .trend-bar      { width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; transition: height .4s ease; }
+        .trend-bar.today { background: var(--green); }
+        .trend-label    { font-size: 11px; color: var(--text-3); margin-top: 4px; white-space: nowrap; }
+
+        /* ══ ANOMALY CARDS (mobile) ══ */
+        .anomaly-cards { display: none; }
+        .anomaly-card-m {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            box-shadow: var(--shadow);
+        }
+        .anomaly-card-m-top {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .anomaly-card-m-id   { font-size: 11px; color: var(--text-3); }
+        .anomaly-card-m-badges { display: flex; gap: 6px; }
+        .anomaly-card-m-tracking {
+            font-family: 'SF Mono','JetBrains Mono','Consolas',monospace;
+            font-size: 13px; background: var(--bg); padding: 3px 8px;
+            border-radius: 5px; color: var(--text-1);
+            display: inline-block; margin-bottom: 8px; word-break: break-all;
+        }
+        .anomaly-card-m-desc {
+            font-size: 12.5px; color: var(--text-2); margin-bottom: 8px;
+            display: -webkit-box; -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .anomaly-card-m-meta {
+            display: flex; flex-wrap: wrap; gap: 8px;
+            font-size: 12px; color: var(--text-2); margin-bottom: 8px;
+        }
+        .anomaly-card-m-meta span { display: flex; align-items: center; gap: 4px; }
+        .anomaly-card-m-time {
+            font-size: 11.5px; color: var(--text-3);
+            padding-top: 8px; border-top: 1px solid var(--border-soft);
+            margin-bottom: 8px;
+        }
+        .anomaly-card-m-actions { display: flex; gap: 8px; }
+
+        /* toolbar filters stack on mobile */
+        @media (max-width: 480px) {
+            #anomaly-type-filter, #anomaly-status-filter {
+                width: 100% !important; min-width: 0 !important;
+            }
+        }
+
+        /* ══ ANOMALY BADGES ══ */
+        .badge-type     { display:inline-block; padding:2px 8px; border-radius:5px; font-size:12px; font-weight:500; }
+        .badge-inbound  { background:var(--red-bg);    color:var(--red-text); }
+        .badge-outbound { background:var(--orange-bg); color:var(--orange-text); }
+        .badge-pending  { background:var(--orange-bg); color:var(--orange-text); }
+        .badge-resolved { background:var(--green-bg);  color:var(--green-text); }
+        .desc-cell      { max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text-2); font-size:12.5px; }
+    </style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header class="app-header">
+    <div class="brand">
+        <div class="brand-mark">S</div>
+        <span class="brand-name">速递智管</span>
+    </div>
+    <nav class="header-tabs" id="header-tabs">
+        <button class="htab active" data-tab="overview"  onclick="switchTab('overview')">货架总览</button>
+        <button class="htab"        data-tab="packages"  onclick="switchTab('packages')">包裹列表</button>
+        <button class="htab"        data-tab="analytics" onclick="switchTab('analytics')">数据分析</button>
+        <button class="htab" id="tab-entry" data-tab="entry" style="display:none" onclick="switchTab('entry')">入库管理</button>
+        <button class="htab" id="tab-taken"   data-tab="taken"   onclick="switchTab('taken')">取件记录</button>
+        <button class="htab" id="tab-anomaly" data-tab="anomaly" style="display:none" onclick="switchTab('anomaly')">异常处理</button>
+    </nav>
+    <div class="header-right">
+        <span class="user-name" id="display-name"></span>
+        <span class="role-pill"  id="role-pill"></span>
+        <a class="btn-logout" href="profile.html" style="text-decoration:none;display:inline-flex;align-items:center;">个人中心</a>
+        <button class="btn-logout" onclick="location.href='logout.php'">退出</button>
+    </div>
+</header>
+
+<!-- ══ PAGE: 货架总览 ══ -->
+<div class="page active" id="page-overview">
+    <div class="stats-row">
+        <div class="stat-card accent">
+            <div class="stat-label">在库总量</div>
+            <div class="stat-value" id="stat-total">—</div>
+            <div class="stat-sub">件包裹</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-label">今日入库</div>
+            <div class="stat-value" id="stat-today">—</div>
+            <div class="stat-sub">件（自然日）</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">已占用货架</div>
+            <div class="stat-value" id="stat-shelves">—</div>
+            <div class="stat-sub">/ 6 个存储位</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-label">最长在库</div>
+            <div class="stat-value" id="stat-oldest" style="font-size:18px;padding-top:4px">—</div>
+            <div class="stat-sub">最早入库包裹时长</div>
+        </div>
+    </div>
+
+    <div class="section-header">
+        <span class="section-title">存储区域</span>
+        <span class="section-hint">点击货架跳转至对应包裹列表</span>
+    </div>
+    <div class="shelf-layout">
+        <div class="shelf-side">
+            <div class="shelf-side-label">左侧区域</div>
+            <div class="shelf-card" id="sc-1" onclick="gotoShelf(1)">
+                <div class="shelf-card-top"><span class="shelf-num">1 号位</span><span class="shelf-badge zero" id="sb-1">0 件</span></div>
+                <div class="shelf-bar-track"><div class="shelf-bar-fill" id="sbf-1" style="width:0%"></div></div>
+            </div>
+            <div class="shelf-card" id="sc-2" onclick="gotoShelf(2)">
+                <div class="shelf-card-top"><span class="shelf-num">2 号位</span><span class="shelf-badge zero" id="sb-2">0 件</span></div>
+                <div class="shelf-bar-track"><div class="shelf-bar-fill" id="sbf-2" style="width:0%"></div></div>
+            </div>
+            <div class="shelf-card" id="sc-3" onclick="gotoShelf(3)">
+                <div class="shelf-card-top"><span class="shelf-num">3 号位</span><span class="shelf-badge zero" id="sb-3">0 件</span></div>
+                <div class="shelf-bar-track"><div class="shelf-bar-fill" id="sbf-3" style="width:0%"></div></div>
+            </div>
+        </div>
+        <div class="shelf-aisle"><span>通 道</span></div>
+        <div class="shelf-side">
+            <div class="shelf-side-label">右侧区域</div>
+            <div class="shelf-card" id="sc-4" onclick="gotoShelf(4)">
+                <div class="shelf-card-top"><span class="shelf-num">4 号位</span><span class="shelf-badge zero" id="sb-4">0 件</span></div>
+                <div class="shelf-bar-track"><div class="shelf-bar-fill" id="sbf-4" style="width:0%"></div></div>
+            </div>
+            <div class="shelf-card" id="sc-5" onclick="gotoShelf(5)">
+                <div class="shelf-card-top"><span class="shelf-num">5 号位</span><span class="shelf-badge zero" id="sb-5">0 件</span></div>
+                <div class="shelf-bar-track"><div class="shelf-bar-fill" id="sbf-5" style="width:0%"></div></div>
+            </div>
+            <div class="shelf-card" id="sc-6" onclick="gotoShelf(6)">
+                <div class="shelf-card-top"><span class="shelf-num">6 号位</span><span class="shelf-badge zero" id="sb-6">0 件</span></div>
+                <div class="shelf-bar-track"><div class="shelf-bar-fill" id="sbf-6" style="width:0%"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ PAGE: 包裹列表 ══ -->
+<div class="page" id="page-packages">
+    <div class="list-toolbar">
+        <div class="search-box">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+                <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zm11 2-4.35-4.35" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <input type="text" id="search-input" placeholder="搜索单号、手机尾号、分类…" oninput="onSearch()">
+            <button class="search-clear" id="search-clear" onclick="clearSearch()">✕</button>
+        </div>
+        <div class="filter-tag" id="shelf-tag">
+            货架 <span id="shelf-tag-num"></span>
+            <button onclick="clearShelfFilter()">×</button>
+        </div>
+        <div class="toolbar-right">
+            <span class="stats-text" id="stats-text">—</span>
+            <button class="btn btn-ghost" onclick="exportCSV()">导出 CSV</button>
+            <button class="btn btn-ghost" onclick="fetchData()">刷新</button>
+        </div>
+    </div>
+    <div id="error-bar"></div>
+    <div class="table-card">
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th onclick="sortBy('id')"             data-col="id">ID</th>
+                        <th onclick="sortBy('tracking_number')"data-col="tracking_number">快递单号</th>
+                        <th onclick="sortBy('phone_suffix')"   data-col="phone_suffix">手机号</th>
+                        <th class="no-sort">面单信息</th>
+                        <th onclick="sortBy('category')"       data-col="category">分类</th>
+                        <th onclick="sortBy('location')"       data-col="location">存放位置</th>
+                        <th onclick="sortBy('created_at')"     data-col="created_at">在库时长</th>
+                        <th onclick="sortBy('created_at')"     data-col="created_at">入库时间</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <tr class="loading-row"><td colspan="8">加载中…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="pkg-cards" id="pkg-cards">
+        <div class="pkg-cards-sort">
+            <span>排序:</span>
+            <button id="sort-id-asc" onclick="mobileSort('asc')">ID ↑</button>
+            <button id="sort-id-desc" class="active" onclick="mobileSort('desc')">ID ↓</button>
+        </div>
+        <div id="pkg-cards-list">
+            <div class="loading-row" style="padding:60px;text-align:center;color:var(--text-3)">加载中…</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ PAGE: 数据分析 ══ -->
+<div class="page" id="page-analytics">
+    <div class="analytics-grid">
+        <div class="chart-card">
+            <div class="chart-title">货架分布</div>
+            <div class="bar-list" id="chart-shelves"></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">分类分布</div>
+            <div class="bar-list" id="chart-categories"></div>
+        </div>
+    </div>
+    <div class="chart-card">
+        <div class="chart-title">在库时长分布</div>
+        <div class="bucket-row" id="chart-duration"></div>
+    </div>
+    <div class="chart-card" style="margin-top:16px">
+        <div class="chart-title">近 7 日入库趋势</div>
+        <div class="trend-bars" id="chart-trend"></div>
+    </div>
+
+    <div class="analytics-grid" style="margin-top:16px">
+        <div class="chart-card">
+            <div class="chart-title">近 7 日取件量</div>
+            <div class="trend-bars" id="chart-pickup-daily"></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">近 8 周取件量</div>
+            <div class="trend-bars" id="chart-pickup-weekly"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ PAGE: 入库管理（管理员）══ -->
+<div class="page" id="page-entry">
+    <div class="form-card">
+        <div class="form-card-title">新增入库包裹</div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label">快递单号 *</label>
+                <input class="form-input" id="f-tracking" placeholder="如 SF999999999999999" maxlength="50">
+            </div>
+            <div class="form-group">
+                <label class="form-label">收件人手机号 *</label>
+                <input class="form-input" id="f-phone" placeholder="如 15072069316" maxlength="11" inputmode="numeric">
+            </div>
+            <div class="form-group span2">
+                <label class="form-label">物品信息</label>
+                <input class="form-input" id="f-goods" placeholder="如 三只松鼠卤藕丁20g×20袋" maxlength="200">
+            </div>
+            <div class="form-group">
+                <label class="form-label">分类</label>
+                <select class="form-input" id="f-category">
+                    <option value="日常生活用品">日常生活用品</option>
+                    <option value="衣服">衣服</option>
+                    <option value="食物">食物</option>
+                    <option value="保密发货">保密发货</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">存放位置</label>
+                <select class="form-input" id="f-location">
+                    <option value="1">1 号位</option>
+                    <option value="2">2 号位</option>
+                    <option value="3">3 号位</option>
+                    <option value="4">4 号位</option>
+                    <option value="5">5 号位</option>
+                    <option value="6">6 号位</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" id="btn-submit" onclick="submitEntry()">确认入库</button>
+            <span class="form-msg" id="form-msg"></span>
+        </div>
+
+        <!-- 批量导入 (CSV / Excel) -->
+        <div class="import-toggle" id="import-toggle" onclick="toggleImport()">批量导入（CSV / Excel）</div>
+        <div class="import-body" id="import-body">
+            <p class="csv-hint">
+                支持 <strong>.csv</strong> 和 <strong>.xlsx</strong> 两种格式，首行为表头，列顺序：<br>
+                <code>快递单号,手机号,物品信息,分类,货架位置</code><br>
+                分类可选：日常生活用品 / 衣服 / 食物 / 保密发货 / 其他 &nbsp;·&nbsp; 位置 1–6 &nbsp;·&nbsp; 文件 &lt; 10 MB
+            </p>
+            <div style="margin-bottom:12px">
+                <button class="btn btn-ghost" onclick="downloadTemplate()">⬇ 下载导入模板</button>
+            </div>
+            <div class="drop-zone" id="drop-zone"
+                 onclick="document.getElementById('csv-file').click()"
+                 ondragover="event.preventDefault();this.classList.add('dragover')"
+                 ondragleave="this.classList.remove('dragover')"
+                 ondrop="handleImportDrop(event)">
+                <input type="file" id="csv-file" accept=".csv,.txt,.xlsx" onchange="handleImportFileInput(event)" style="display:none">
+                <p>将 CSV / Excel 文件拖拽至此，或 <strong>点击选择文件</strong></p>
+            </div>
+            <div id="import-preview" class="import-preview"></div>
+            <div class="import-actions" id="import-actions" style="display:none">
+                <button class="btn btn-primary" id="btn-import" onclick="submitBatch()">确认导入</button>
+                <button class="btn btn-ghost"   onclick="clearImport()">清除</button>
+                <span class="import-msg" id="import-msg"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ PAGE: 取件记录 ══ -->
+<div class="page" id="page-taken">
+    <div class="list-toolbar">
+        <div class="search-box">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+                <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zm11 2-4.35-4.35" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <input type="text" id="taken-search" placeholder="搜索单号、手机号、分类…" oninput="renderTakenTable()">
+        </div>
+        <div id="taken-date-filter" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span style="font-size:12.5px;color:var(--text-3);">日期</span>
+            <input type="date" id="taken-from" style="height:30px;padding:0 8px;border:1px solid var(--border);border-radius:6px;font-size:12.5px;background:var(--bg);color:var(--text-1);font-family:inherit;">
+            <span style="font-size:12.5px;color:var(--text-3);">至</span>
+            <input type="date" id="taken-to" style="height:30px;padding:0 8px;border:1px solid var(--border);border-radius:6px;font-size:12.5px;background:var(--bg);color:var(--text-1);font-family:inherit;">
+            <button class="btn btn-ghost" style="height:30px;padding:0 10px;" onclick="clearTakenDates()">清除</button>
+        </div>
+        <div class="toolbar-right">
+            <span class="stats-text" id="taken-stats-text">—</span>
+            <button class="btn btn-ghost" id="btn-export-taken" style="display:none" onclick="exportTaken()">导出 CSV</button>
+            <button class="btn btn-ghost" onclick="fetchTaken()">刷新</button>
+        </div>
+    </div>
+    <div class="table-card">
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="no-sort">ID</th>
+                        <th class="no-sort">快递单号</th>
+                        <th class="no-sort">手机号</th>
+                        <th class="no-sort">面单信息</th>
+                        <th class="no-sort">分类</th>
+                        <th class="no-sort">原存放位置</th>
+                        <th class="no-sort">入库时间</th>
+                    </tr>
+                </thead>
+                <tbody id="taken-body">
+                    <tr class="loading-row"><td colspan="7">切换到此标签后自动加载…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="taken-cards" id="taken-cards">
+        <div id="taken-cards-list">
+            <div style="padding:60px;text-align:center;color:var(--text-3)">切换到此标签后自动加载…</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ PAGE: 异常处理（管理员）══ -->
+<div class="page" id="page-anomaly">
+    <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card">
+            <div class="stat-label">异常总数</div>
+            <div class="stat-value" id="anomaly-stat-total">—</div>
+            <div class="stat-sub">条记录</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-label">待处理</div>
+            <div class="stat-value" id="anomaly-stat-pending">—</div>
+            <div class="stat-sub">需跟进</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-label">已处理</div>
+            <div class="stat-value" id="anomaly-stat-resolved">—</div>
+            <div class="stat-sub">已解决</div>
+        </div>
+    </div>
+
+    <div class="list-toolbar">
+        <div class="search-box">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+                <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zm11 2-4.35-4.35" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <input type="text" id="anomaly-search" placeholder="搜索单号、手机号、描述…" oninput="renderAnomalyTable()">
+        </div>
+        <select class="form-input" id="anomaly-type-filter" onchange="renderAnomalyTable()"
+                style="height:34px;width:auto;min-width:110px;">
+            <option value="">全部类型</option>
+            <option value="inbound">入库异常</option>
+            <option value="outbound">出库异常</option>
+        </select>
+        <select class="form-input" id="anomaly-status-filter" onchange="renderAnomalyTable()"
+                style="height:34px;width:auto;min-width:110px;">
+            <option value="">全部状态</option>
+            <option value="pending">待处理</option>
+            <option value="resolved">已处理</option>
+        </select>
+        <div class="toolbar-right">
+            <span class="stats-text" id="anomaly-stats-text">—</span>
+            <button class="btn btn-ghost" onclick="exportAnomalies()">导出 CSV</button>
+            <button class="btn btn-ghost" onclick="fetchAnomalies()">刷新</button>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="no-sort">ID</th>
+                        <th class="no-sort">类型</th>
+                        <th class="no-sort">快递单号</th>
+                        <th class="no-sort">商品信息</th>
+                        <th class="no-sort">格口</th>
+                        <th class="no-sort">手机尾号</th>
+                        <th class="no-sort">异常描述</th>
+                        <th class="no-sort">状态</th>
+                        <th class="no-sort">上报时间</th>
+                        <th class="no-sort">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="anomaly-body">
+                    <tr class="loading-row"><td colspan="10">切换到此标签后自动加载…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="anomaly-cards" id="anomaly-cards">
+        <div id="anomaly-cards-list">
+            <div style="padding:60px;text-align:center;color:var(--text-3)">切换到此标签后自动加载…</div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ EDIT MODAL ══ -->
+<div class="modal-overlay" id="edit-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">编辑包裹信息</span>
+            <button class="modal-close" onclick="closeEditModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="edit-id">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">快递单号 *</label>
+                    <input class="form-input" id="edit-tracking" maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">联系手机号</label>
+                    <input class="form-input" id="edit-phone" maxlength="20">
+                </div>
+                <div class="form-group span2">
+                    <label class="form-label">物品信息</label>
+                    <input class="form-input" id="edit-goods" maxlength="200">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">分类</label>
+                    <select class="form-input" id="edit-category">
+                        <option value="日常生活用品">日常生活用品</option>
+                        <option value="衣服">衣服</option>
+                        <option value="食物">食物</option>
+                        <option value="保密发货">保密发货</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">存放位置</label>
+                    <select class="form-input" id="edit-location">
+                        <option value="1">1 号位</option>
+                        <option value="2">2 号位</option>
+                        <option value="3">3 号位</option>
+                        <option value="4">4 号位</option>
+                        <option value="5">5 号位</option>
+                        <option value="6">6 号位</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <span class="form-msg" id="edit-msg"></span>
+            <button class="btn btn-ghost"   onclick="closeEditModal()">取消</button>
+            <button class="btn btn-primary" id="btn-save" onclick="saveEdit()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ ANOMALY EDIT MODAL ══ -->
+<div class="modal-overlay" id="anomaly-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">编辑异常工单</span>
+            <button class="modal-close" onclick="closeAnomalyModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="anomaly-edit-id">
+            <div class="form-grid">
+                <div class="form-group span2">
+                    <label class="form-label">异常描述</label>
+                    <input class="form-input" id="anomaly-edit-desc" maxlength="500">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">处理状态</label>
+                    <select class="form-input" id="anomaly-edit-status">
+                        <option value="pending">待处理</option>
+                        <option value="resolved">已处理</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <span class="form-msg" id="anomaly-edit-msg"></span>
+            <button class="btn btn-ghost"   onclick="closeAnomalyModal()">取消</button>
+            <button class="btn btn-primary" id="btn-anomaly-save" onclick="saveAnomalyEdit()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ STATUS BAR ══ -->
+<div class="status-bar">
+    <span><span class="status-dot"></span>自动刷新 · 最后更新 <span id="last-update">—</span></span>
+    <button onclick="fetchData()">立即刷新</button>
+</div>
+
+<script>
+    // ── State ──
+    let allData        = [];
+    let allTakenData   = [];
+    let allAnomalyData = [];
+    let shelfFilter  = null;
+    let refreshTimer = null;
+    let currentTab   = 'overview';
+    let sortCol      = 'id';
+    let sortDir      = 'desc';
+    let userRole     = 'user';
+    let expandedRows = new Set();
+    let csvRows      = [];
+
+    // ── Helpers ──
+    const esc = s => s == null ? '' : String(s).replace(/[&<>"']/g,
+        c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+    function duration(iso) {
+        const ms = iso ? Date.now() - new Date(iso).getTime() : NaN;
+        if (isNaN(ms) || ms < 0) return null;
+        const s = Math.floor(ms / 1e3), m = Math.floor(s / 60),
+              h = Math.floor(m / 60),   d = Math.floor(h / 24);
+        if (d > 0) return `${d}天${h % 24 ? (h % 24) + '小时' : ''}`;
+        if (h > 0) return `${h}小时${m % 60 ? (m % 60) + '分' : ''}`;
+        if (m > 0) return `${m}分钟`;
+        return `${Math.max(s, 1)}秒`;
+    }
+
+    function durationBadge(iso) {
+        const t = duration(iso);
+        if (!t) return `<span class="duration-badge err">—</span>`;
+        const ms  = Date.now() - new Date(iso).getTime();
+        const cls = ms > 3 * 864e5 ? 'warn' : '';
+        return `<span class="duration-badge ${cls}" title="入库：${fmtDate(iso)}">${t}</span>`;
+    }
+
+    function fmtDate(iso) {
+        if (!iso) return '—';
+        try {
+            const d = new Date(iso);
+            return isNaN(d) ? iso.slice(0, 19) : d.toLocaleString('zh-CN', { hour12: false });
+        } catch { return iso; }
+    }
+
+    // ── Boot ──
+    async function initPage() {
+        try {
+            const d = await fetch('check_session.php').then(r => r.json());
+            if (!d.logged_in) { location.href = 'login.html'; return; }
+            document.getElementById('display-name').textContent = d.display_name;
+            const pill = document.getElementById('role-pill');
+            userRole = d.role;
+            if (d.role === 'admin') {
+                pill.textContent = '管理员';
+                pill.className   = 'role-pill role-admin';
+                document.getElementById('tab-entry').style.display   = '';
+                document.getElementById('tab-anomaly').style.display = '';
+                document.getElementById('btn-export-taken').style.display = '';
+                document.getElementById('taken-date-filter').style.display = 'flex';
+                const fromEl = document.getElementById('taken-from');
+                const toEl   = document.getElementById('taken-to');
+                if (fromEl) fromEl.addEventListener('change', renderTakenTable);
+                if (toEl)   toEl.addEventListener('change', renderTakenTable);
+            } else {
+                pill.textContent = '用户';
+                pill.className   = 'role-pill role-user';
+            }
+            await fetchData();
+            startRefresh();
+        } catch { location.href = 'login.html'; }
+    }
+
+    // ── Data ──
+    async function fetchData() {
+        try {
+            const res = await fetch('get_shipments.php?limit=200');
+            if (res.status === 401) { location.href = 'login.html'; return; }
+            const data = await res.json();
+            if (data.error) { showError(data.error); return; }
+            allData = Array.isArray(data) ? data : [];
+            clearError();
+            renderOverview();
+            renderTable();
+            if (currentTab === 'analytics') renderAnalytics();
+            document.getElementById('last-update').textContent =
+                new Date().toLocaleTimeString('zh-CN', { hour12: false });
+        } catch (e) { showError('数据加载失败：' + e.message); }
+    }
+
+    // ── Overview ──
+    function renderOverview() {
+        const today  = new Date().toDateString();
+        const counts = {};
+        let oldestMs = 0, oldestText = '—';
+
+        allData.forEach(r => {
+            const l = parseInt(r.location);
+            if (l >= 1 && l <= 6) counts[l] = (counts[l] || 0) + 1;
+            if (r.created_at) {
+                const ms = Date.now() - new Date(r.created_at).getTime();
+                if (ms > oldestMs) { oldestMs = ms; oldestText = duration(r.created_at) || '—'; }
+            }
+        });
+
+        document.getElementById('stat-total').textContent   = allData.length;
+        document.getElementById('stat-today').textContent   = allData.filter(r => {
+            try { return new Date(r.created_at).toDateString() === today; } catch { return false; }
+        }).length;
+        document.getElementById('stat-shelves').textContent = Object.keys(counts).length;
+        document.getElementById('stat-oldest').textContent  = oldestText;
+
+        const max = Math.max(1, ...Object.values(counts));
+        for (let i = 1; i <= 6; i++) {
+            const n = counts[i] || 0;
+            document.getElementById(`sb-${i}`).textContent = `${n} 件`;
+            document.getElementById(`sb-${i}`).className   = 'shelf-badge' + (n === 0 ? ' zero' : '');
+            document.getElementById(`sbf-${i}`).style.width = (n === 0 ? 0 : Math.max(Math.round(n / max * 100), 8)) + '%';
+            document.getElementById(`sc-${i}`).classList.toggle('empty', n === 0);
+        }
+    }
+
+    // ── Analytics ──
+    function renderAnalytics() {
+        // Shelf distribution
+        const shelfCounts = {};
+        allData.forEach(r => { const l = r.location; shelfCounts[l] = (shelfCounts[l] || 0) + 1; });
+        const maxS = Math.max(1, ...Object.values(shelfCounts));
+        document.getElementById('chart-shelves').innerHTML =
+            [1, 2, 3, 4, 5, 6].map(i => {
+                const n = shelfCounts[i] || 0;
+                return barRow(`${i} 号位`, n, Math.round(n / maxS * 100), 'var(--accent)');
+            }).join('');
+
+        // Category distribution
+        const catMap = {};
+        allData.forEach(r => { const c = r.category || '未分类'; catMap[c] = (catMap[c] || 0) + 1; });
+        const cats = Object.entries(catMap).sort((a, b) => b[1] - a[1]);
+        const maxC = Math.max(1, ...cats.map(([, v]) => v));
+        const palette = ['var(--accent)', 'var(--green)', 'var(--orange)', '#8b5cf6', '#ec4899'];
+        document.getElementById('chart-categories').innerHTML =
+            cats.map(([k, v], i) => barRow(k, v, Math.round(v / maxC * 100), palette[i % palette.length])).join('');
+
+        // Duration buckets
+        const now = Date.now();
+        const b   = [0, 0, 0, 0];
+        allData.forEach(r => {
+            if (!r.created_at) return;
+            const days = (now - new Date(r.created_at).getTime()) / 864e5;
+            if (days < 1)     b[0]++;
+            else if (days < 3) b[1]++;
+            else if (days < 7) b[2]++;
+            else               b[3]++;
+        });
+        document.getElementById('chart-duration').innerHTML = [
+            { cls: 'c-fresh', count: b[0], label: '< 1 天' },
+            { cls: 'c-ok',    count: b[1], label: '1–3 天' },
+            { cls: 'c-warn',  count: b[2], label: '3–7 天' },
+            { cls: 'c-stale', count: b[3], label: '> 7 天' },
+        ].map(({ cls, count, label }) => `
+            <div class="bucket ${cls}">
+                <div class="bucket-count">${count}</div>
+                <div class="bucket-label">${label}</div>
+            </div>`).join('');
+
+        renderTrend();
+        renderPickupStats();
+    }
+
+    async function renderPickupStats() {
+        const dailyEl  = document.getElementById('chart-pickup-daily');
+        const weeklyEl = document.getElementById('chart-pickup-weekly');
+        if (!dailyEl || !weeklyEl) return;
+        try {
+            const res  = await fetch('get_stats.php');
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+
+            const dailyMax = Math.max(1, ...data.daily.map(d => d.count));
+            dailyEl.innerHTML = data.daily.map(d => {
+                const h = d.count > 0 ? Math.max(Math.round(d.count / dailyMax * 100), 8) : 0;
+                const isToday = d.date === new Date().toISOString().slice(0, 10);
+                return `<div class="trend-col">
+                    <span class="trend-count">${d.count || ''}</span>
+                    <div class="trend-bar-wrap">
+                        <div class="trend-bar${isToday ? ' today' : ''}" style="height:${h}%"></div>
+                    </div>
+                    <span class="trend-label">${esc(d.label)}</span>
+                </div>`;
+            }).join('');
+
+            const weeklyMax = Math.max(1, ...data.weekly.map(w => w.count));
+            weeklyEl.innerHTML = data.weekly.map((w, i) => {
+                const h = w.count > 0 ? Math.max(Math.round(w.count / weeklyMax * 100), 8) : 0;
+                const isCurr = i === data.weekly.length - 1;
+                return `<div class="trend-col">
+                    <span class="trend-count">${w.count || ''}</span>
+                    <div class="trend-bar-wrap">
+                        <div class="trend-bar${isCurr ? ' today' : ''}" style="height:${h}%"></div>
+                    </div>
+                    <span class="trend-label">${esc(w.label)}</span>
+                </div>`;
+            }).join('');
+        } catch (e) {
+            dailyEl.innerHTML  = `<div style="padding:24px;color:var(--text-3);font-size:12px;">加载失败：${esc(e.message)}</div>`;
+            weeklyEl.innerHTML = '';
+        }
+    }
+
+    function renderTrend() {
+        const slots = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            slots.push({ label: `${d.getMonth()+1}/${d.getDate()}`, ds: d.toDateString(), count: 0, today: i === 0 });
+        }
+        allData.forEach(r => {
+            if (!r.created_at) return;
+            const slot = slots.find(s => s.ds === new Date(r.created_at).toDateString());
+            if (slot) slot.count++;
+        });
+        const max = Math.max(1, ...slots.map(s => s.count));
+        document.getElementById('chart-trend').innerHTML = slots.map(s => {
+            const h = s.count > 0 ? Math.max(Math.round(s.count / max * 100), 8) : 0;
+            return `<div class="trend-col">
+                <span class="trend-count">${s.count || ''}</span>
+                <div class="trend-bar-wrap">
+                    <div class="trend-bar${s.today ? ' today' : ''}" style="height:${h}%"></div>
+                </div>
+                <span class="trend-label">${s.label}</span>
+            </div>`;
+        }).join('');
+    }
+
+    function barRow(label, val, pct, color) {
+        const w = val > 0 ? Math.max(pct, 4) : 0;
+        return `<div class="bar-item">
+            <span class="bar-label">${esc(label)}</span>
+            <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div>
+            <span class="bar-val">${val}</span>
+        </div>`;
+    }
+
+    // ── Table ──
+    function renderTable() {
+        const keyword = document.getElementById('search-input').value.trim().toLowerCase();
+        const tag = document.getElementById('shelf-tag');
+        if (shelfFilter !== null) {
+            document.getElementById('shelf-tag-num').textContent = `${shelfFilter} 号`;
+            tag.style.display = 'flex';
+        } else {
+            tag.style.display = 'none';
+        }
+
+        // 管理员：动态添加操作列表头
+        const thead = document.querySelector('#page-packages thead tr');
+        if (userRole === 'admin' && !document.getElementById('th-actions')) {
+            const th = document.createElement('th');
+            th.id = 'th-actions';
+            th.className = 'no-sort';
+            th.textContent = '操作';
+            thead.appendChild(th);
+        }
+        const cols = userRole === 'admin' ? 9 : 8;
+
+        const tbody = document.getElementById('table-body');
+        if (allData.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${cols}" style="padding:60px;text-align:center;color:var(--text-3)">暂无包裹数据</td></tr>`;
+            document.getElementById('stats-text').textContent = '0 条记录';
+            return;
+        }
+
+        const sorted = [...allData].sort((a, b) => {
+            let va = a[sortCol], vb = b[sortCol];
+            if (sortCol === 'id' || sortCol === 'location') { va = parseInt(va) || 0; vb = parseInt(vb) || 0; }
+            if (va < vb) return sortDir === 'asc' ? -1 : 1;
+            if (va > vb) return sortDir === 'asc' ?  1 : -1;
+            return 0;
+        });
+
+        let visible = 0;
+        tbody.innerHTML = sorted.map(r => {
+            const id     = parseInt(r.id);
+            const loc    = String(r.location ?? '');
+            const matchS = !keyword || [r.tracking_number, r.phone_suffix, r.raw_text, r.category, loc]
+                               .some(v => String(v || '').toLowerCase().includes(keyword));
+            const matchSh = shelfFilter === null || loc === String(shelfFilter);
+            const show    = matchS && matchSh;
+            if (show) visible++;
+            const active     = show && shelfFilter !== null && loc === String(shelfFilter);
+            const detailOpen = expandedRows.has(id);
+
+            const actionCol = userRole === 'admin' ? `
+                <td class="action-cell" onclick="event.stopPropagation()">
+                    <button class="btn-action btn-edit"   onclick="openEditModal(${id})">编辑</button>
+                    <button class="btn-action btn-delete" onclick="deleteShipment(${id})">删除</button>
+                </td>` : '';
+
+            const detailRow = `<tr class="detail-row${detailOpen && show ? ' open' : ''}${!show ? ' row-hidden' : ''}" id="detail-${id}">
+                <td colspan="${cols}">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-item-label">物品信息</span>
+                            <span class="detail-item-val">${esc(r.raw_text) || '—'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">联系电话</span>
+                            <span class="detail-item-val">${esc(r.phone_suffix) || '—'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-item-label">入库时间</span>
+                            <span class="detail-item-val">${fmtDate(r.created_at)}</span>
+                        </div>
+                    </div>
+                </td>
+            </tr>`;
+
+            return `<tr class="data-row ${!show ? 'row-hidden' : active ? 'row-shelf-active' : ''}" onclick="toggleDetail(${id})">
+                <td class="id-cell">${esc(r.id)}</td>
+                <td><span class="mono">${esc(r.tracking_number || '—')}</span></td>
+                <td><span class="mono">${esc(r.phone_suffix || '—')}</span></td>
+                <td><div class="raw-text-cell" title="${esc(r.raw_text)}">${esc(r.raw_text) || '—'}</div></td>
+                <td><span class="tag tag-category">${esc(r.category || '未分类')}</span></td>
+                <td><span class="tag tag-location">${esc(loc)} 号</span></td>
+                <td>${durationBadge(r.created_at)}</td>
+                <td class="time-text">${fmtDate(r.created_at)}</td>
+                ${actionCol}
+            </tr>${detailRow}`;
+        }).join('');
+
+        document.getElementById('stats-text').textContent =
+            visible === allData.length ? `共 ${allData.length} 条` : `${visible} / ${allData.length} 条`;
+
+        document.querySelectorAll('thead th[data-col]').forEach(th => {
+            th.classList.toggle('sort-asc',  th.dataset.col === sortCol && sortDir === 'asc');
+            th.classList.toggle('sort-desc', th.dataset.col === sortCol && sortDir === 'desc');
+        });
+
+        // 手机端卡片渲染
+        renderPkgCards(sorted, keyword);
+    }
+
+    let mobileSortDir = 'desc';
+
+    function mobileSort(dir) {
+        mobileSortDir = dir;
+        document.querySelectorAll('.pkg-cards-sort button').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`sort-id-${dir}`).classList.add('active');
+        renderTable();
+    }
+
+    function renderPkgCards(sorted, keyword) {
+        const cardsEl = document.getElementById('pkg-cards-list');
+        if (!cardsEl) return;
+
+        // 使用手机端排序
+        const mobileSorted = [...allData].sort((a, b) => {
+            const va = parseInt(a.id) || 0;
+            const vb = parseInt(b.id) || 0;
+            return mobileSortDir === 'asc' ? va - vb : vb - va;
+        });
+
+        let visible = 0;
+        cardsEl.innerHTML = mobileSorted.map(r => {
+            const id     = parseInt(r.id);
+            const loc    = String(r.location ?? '');
+            const matchS = !keyword || [r.tracking_number, r.phone_suffix, r.raw_text, r.category, loc]
+                               .some(v => String(v || '').toLowerCase().includes(keyword));
+            const matchSh = shelfFilter === null || loc === String(shelfFilter);
+            const show    = matchS && matchSh;
+            if (show) visible++;
+
+            const dur = duration(r.created_at) || '—';
+            const durClass = r.created_at && (Date.now() - new Date(r.created_at).getTime()) > 3 * 864e5 ? 'duration-warn' : 'duration-ok';
+
+            const adminActions = userRole === 'admin' ? `
+                <div class="pkg-card-m-actions">
+                    <button class="btn-action btn-edit" onclick="event.stopPropagation();openEditModal(${id})">编辑</button>
+                    <button class="btn-action btn-delete" onclick="event.stopPropagation();deleteShipment(${id})">删除</button>
+                </div>` : '';
+
+            return `<div class="pkg-card-m ${!show ? 'hidden' : ''}" onclick="toggleDetail(${id})">
+                <div class="pkg-card-m-top">
+                    <span class="pkg-card-m-id">#${esc(r.id)}</span>
+                    <span class="pkg-card-m-loc">${esc(loc)} 号位</span>
+                </div>
+                <div class="pkg-card-m-tracking">${esc(r.tracking_number || '—')}</div>
+                <div class="pkg-card-m-meta">
+                    <span>在库 <span class="${durClass}">${dur}</span></span>
+                    <span><span class="tag tag-category">${esc(r.category || '未分类')}</span></span>
+                </div>
+                ${r.raw_text ? `<div class="pkg-card-m-meta" title="${esc(r.raw_text)}"><span>${esc(r.raw_text.length > 30 ? r.raw_text.slice(0,30)+'…' : r.raw_text)}</span></div>` : ''}
+                <div class="pkg-card-m-phone">手机尾号: ${esc(r.phone_suffix || '—')}</div>
+                ${adminActions}
+            </div>`;
+        }).join('');
+    }
+
+    function toggleDetail(id) {
+        const row = document.getElementById(`detail-${id}`);
+        if (!row) return;
+        if (expandedRows.has(id)) { expandedRows.delete(id); row.classList.remove('open'); }
+        else                      { expandedRows.add(id);    row.classList.add('open'); }
+    }
+
+    function sortBy(col) {
+        sortDir = sortCol === col && sortDir === 'asc' ? 'desc' : 'asc';
+        sortCol = col;
+        renderTable();
+    }
+
+    // ── CSV export ──
+    function exportCSV() {
+        const rows = [['ID', '快递单号', '手机尾号', '面单信息', '分类', '位置', '入库时间']];
+        allData.forEach(r => rows.push([r.id, r.tracking_number, r.phone_suffix, r.raw_text, r.category, r.location, r.created_at]));
+        const csv  = rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+        const link = Object.assign(document.createElement('a'), {
+            href:     'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(csv),
+            download: `shipments_${new Date().toISOString().slice(0, 10)}.csv`,
+        });
+        link.click();
+    }
+
+    // ── Entry form (admin) ──
+    async function submitEntry() {
+        const tracking = document.getElementById('f-tracking').value.trim();
+        const phone    = document.getElementById('f-phone').value.trim();
+        const goods    = document.getElementById('f-goods').value.trim();
+        const category = document.getElementById('f-category').value;
+        const location = document.getElementById('f-location').value;
+        const btn      = document.getElementById('btn-submit');
+
+        if (!tracking || !phone)          { setFormMsg('快递单号和手机号为必填项', false); return; }
+        if (!/^1[3-9]\d{9}$/.test(phone)) { setFormMsg('请输入有效的 11 位手机号', false); return; }
+
+        btn.disabled    = true;
+        btn.textContent = '提交中…';
+        setFormMsg('', null);
+        try {
+            const res  = await fetch('add_shipment.php', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ tracking_number: tracking, phone_suffix: phone, goods, category, location }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setFormMsg('入库成功！', true);
+                ['f-tracking', 'f-phone', 'f-goods'].forEach(id => document.getElementById(id).value = '');
+                fetchData();
+            } else {
+                setFormMsg(data.error || '提交失败', false);
+            }
+        } catch (e) {
+            setFormMsg('网络错误：' + e.message, false);
+        } finally {
+            btn.disabled    = false;
+            btn.textContent = '确认入库';
+        }
+    }
+
+    function setFormMsg(text, ok) {
+        const el = document.getElementById('form-msg');
+        el.textContent = text;
+        el.className   = ok === null ? 'form-msg' : `form-msg ${ok ? 'ok' : 'err'}`;
+    }
+
+    // ── Taken records ──
+    async function fetchTaken() {
+        try {
+            const res = await fetch('get_shipments.php?status=1&limit=500');
+            if (res.status === 401) { location.href = 'login.html'; return; }
+            const data = await res.json();
+            allTakenData = Array.isArray(data) ? data : [];
+            renderTakenTable();
+        } catch (e) {
+            document.getElementById('taken-body').innerHTML =
+                `<tr><td colspan="7" style="padding:40px;text-align:center;color:var(--red-text)">加载失败：${esc(e.message)}</td></tr>`;
+            const cl = document.getElementById('taken-cards-list');
+            if (cl) cl.innerHTML = `<div style="padding:40px;text-align:center;color:var(--red-text)">加载失败：${esc(e.message)}</div>`;
+        }
+    }
+
+    function renderTakenTable() {
+        const keyword = document.getElementById('taken-search').value.trim().toLowerCase();
+        const fromEl  = document.getElementById('taken-from');
+        const toEl    = document.getElementById('taken-to');
+        const fromTs  = fromEl && fromEl.value ? new Date(fromEl.value + 'T00:00:00').getTime() : null;
+        const toTs    = toEl   && toEl.value   ? new Date(toEl.value   + 'T23:59:59').getTime() : null;
+        const tbody     = document.getElementById('taken-body');
+        const cardsList = document.getElementById('taken-cards-list');
+        const emptyMsg  = '<div style="padding:60px;text-align:center;color:var(--text-3)">暂无取件记录</div>';
+
+        if (allTakenData.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="padding:60px;text-align:center;color:var(--text-3)">暂无取件记录</td></tr>`;
+            if (cardsList) cardsList.innerHTML = emptyMsg;
+            document.getElementById('taken-stats-text').textContent = '0 条';
+            return;
+        }
+
+        const filtered = allTakenData.filter(r => {
+            const loc   = String(r.location ?? '');
+            const match = !keyword || [r.tracking_number, r.phone_suffix, r.raw_text, r.category, loc]
+                              .some(v => String(v || '').toLowerCase().includes(keyword));
+            if (!match) return false;
+            if (fromTs !== null || toTs !== null) {
+                const ts = r.created_at ? new Date(r.created_at).getTime() : NaN;
+                if (isNaN(ts)) return false;
+                if (fromTs !== null && ts < fromTs) return false;
+                if (toTs   !== null && ts > toTs)   return false;
+            }
+            return true;
+        });
+        const filteredSet = new Set(filtered.map(r => r.id));
+
+        // Desktop table view
+        tbody.innerHTML = allTakenData.map(r => {
+            const loc  = String(r.location ?? '');
+            const show = filteredSet.has(r.id);
+            return `<tr class="${show ? '' : 'row-hidden'}">
+                <td class="id-cell">${esc(r.id)}</td>
+                <td><span class="mono">${esc(r.tracking_number || '—')}</span></td>
+                <td><span class="mono">${esc(r.phone_suffix   || '—')}</span></td>
+                <td><div class="raw-text-cell" title="${esc(r.raw_text)}">${esc(r.raw_text) || '—'}</div></td>
+                <td><span class="tag tag-category">${esc(r.category || '未分类')}</span></td>
+                <td><span class="tag tag-location">${esc(loc)} 号</span></td>
+                <td class="time-text">${fmtDate(r.created_at)}</td>
+            </tr>`;
+        }).join('');
+
+        // Mobile card view
+        if (cardsList) {
+            if (filtered.length === 0) {
+                cardsList.innerHTML = '<div style="padding:60px;text-align:center;color:var(--text-3)">暂无匹配记录</div>';
+            } else {
+                cardsList.innerHTML = filtered.map(r => {
+                    const rawShort = r.raw_text
+                        ? (String(r.raw_text).length > 32 ? String(r.raw_text).slice(0, 32) + '…' : String(r.raw_text))
+                        : '';
+                    return `<div class="taken-card-m">
+                        <div class="taken-card-m-top">
+                            <span class="taken-card-m-id">#${esc(r.id)}</span>
+                            <span class="tag">${esc(r.category || '未分类')}</span>
+                        </div>
+                        <div class="taken-card-m-tracking">${esc(r.tracking_number || '—')}</div>
+                        <div class="taken-card-m-meta">
+                            <span>位置 ${esc(String(r.location))} 号</span>
+                            ${r.phone_suffix ? `<span>手机 ${esc(r.phone_suffix)}</span>` : ''}
+                            ${rawShort ? `<span>${esc(rawShort)}</span>` : ''}
+                        </div>
+                        <div class="taken-card-m-time">入库于 ${fmtDate(r.created_at)}</div>
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        document.getElementById('taken-stats-text').textContent =
+            filtered.length === allTakenData.length ? `共 ${allTakenData.length} 条` : `${filtered.length} / ${allTakenData.length} 条`;
+    }
+
+    function clearTakenDates() {
+        const fromEl = document.getElementById('taken-from');
+        const toEl   = document.getElementById('taken-to');
+        if (fromEl) fromEl.value = '';
+        if (toEl)   toEl.value   = '';
+        renderTakenTable();
+    }
+
+    function exportTaken() {
+        const fromEl = document.getElementById('taken-from');
+        const toEl   = document.getElementById('taken-to');
+        const params = new URLSearchParams();
+        if (fromEl && fromEl.value) params.set('from', fromEl.value);
+        if (toEl   && toEl.value)   params.set('to',   toEl.value);
+        const qs = params.toString();
+        location.href = 'export_taken.php' + (qs ? ('?' + qs) : '');
+    }
+
+    // ── Navigation ──
+    function gotoShelf(num) {
+        shelfFilter = num;
+        switchTab('packages');
+        renderTable();
+    }
+
+    function switchTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.htab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(`page-${tab}`).classList.add('active');
+        if (tab === 'analytics') renderAnalytics();
+        if (tab === 'taken')     fetchTaken();
+        if (tab === 'anomaly')   fetchAnomalies();
+    }
+
+    // ── Search ──
+    function onSearch() {
+        document.getElementById('search-clear').style.display =
+            document.getElementById('search-input').value ? 'block' : 'none';
+        renderTable();
+    }
+    function clearSearch() {
+        document.getElementById('search-input').value = '';
+        document.getElementById('search-clear').style.display = 'none';
+        renderTable();
+    }
+    function clearShelfFilter() { shelfFilter = null; renderTable(); }
+
+    // ── Error ──
+    function showError(msg) {
+        document.getElementById('error-bar').innerHTML = `<div class="error-banner">${esc(msg)}</div>`;
+    }
+    function clearError() { document.getElementById('error-bar').innerHTML = ''; }
+
+    // ── Edit Modal ──
+    function openEditModal(id) {
+        const r = allData.find(x => parseInt(x.id) === id);
+        if (!r) return;
+        document.getElementById('edit-id').value        = r.id;
+        document.getElementById('edit-tracking').value  = r.tracking_number || '';
+        document.getElementById('edit-phone').value     = r.phone_suffix    || '';
+        document.getElementById('edit-goods').value     = r.raw_text        || '';
+        document.getElementById('edit-category').value  = r.category        || '其他';
+        document.getElementById('edit-location').value  = r.location        || '1';
+        document.getElementById('edit-msg').textContent = '';
+        document.getElementById('edit-modal').classList.add('open');
+    }
+
+    function closeEditModal() {
+        document.getElementById('edit-modal').classList.remove('open');
+    }
+
+    async function saveEdit() {
+        const id       = parseInt(document.getElementById('edit-id').value);
+        const tracking = document.getElementById('edit-tracking').value.trim();
+        const phone    = document.getElementById('edit-phone').value.trim();
+        const goods    = document.getElementById('edit-goods').value.trim();
+        const category = document.getElementById('edit-category').value;
+        const location = document.getElementById('edit-location').value;
+        const btn      = document.getElementById('btn-save');
+        const msg      = document.getElementById('edit-msg');
+
+        if (!tracking) { msg.textContent = '快递单号不能为空'; msg.className = 'form-msg err'; return; }
+
+        btn.disabled    = true;
+        btn.textContent = '保存中…';
+        msg.textContent = '';
+        try {
+            const res  = await fetch('update_shipment.php', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ id, tracking_number: tracking, phone_suffix: phone, goods, category, location }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeEditModal();
+                fetchData();
+            } else {
+                msg.textContent = data.error || '保存失败';
+                msg.className   = 'form-msg err';
+            }
+        } catch (e) {
+            msg.textContent = '网络错误：' + e.message;
+            msg.className   = 'form-msg err';
+        } finally {
+            btn.disabled    = false;
+            btn.textContent = '保存';
+        }
+    }
+
+    // ── Delete ──
+    async function deleteShipment(id) {
+        if (!confirm(`确认删除 ID ${id} 的包裹？此操作不可撤销。`)) return;
+        try {
+            const res  = await fetch('delete_shipment.php', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ id }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                fetchData();
+            } else {
+                alert(data.error || '删除失败');
+            }
+        } catch (e) {
+            alert('网络错误：' + e.message);
+        }
+    }
+
+    // ── Import (CSV + Excel) ──
+    const VALID_CATS = ['日常生活用品', '衣服', '食物', '保密发货', '其他'];
+    const IMPORT_SIZE_LIMIT = 10 * 1024 * 1024; // 10 MB
+
+    function toggleImport() {
+        document.getElementById('import-toggle').classList.toggle('open');
+        document.getElementById('import-body').classList.toggle('open');
+    }
+
+    function handleImportDrop(e) {
+        e.preventDefault();
+        document.getElementById('drop-zone').classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) processImportFile(file);
+    }
+
+    function handleImportFileInput(e) {
+        const file = e.target.files[0];
+        if (file) processImportFile(file);
+    }
+
+    function processImportFile(file) {
+        if (file.size > IMPORT_SIZE_LIMIT) {
+            showImportMsg('文件超过 10 MB，请拆分后导入', false);
+            return;
+        }
+        const isXlsx = file.name.toLowerCase().endsWith('.xlsx');
+        const reader = new FileReader();
+        if (isXlsx) {
+            reader.onload = ev => parseAndPreviewXLSX(ev.target.result);
+            reader.readAsArrayBuffer(file);
+        } else {
+            reader.onload = ev => parseAndPreviewCSV(ev.target.result);
+            reader.readAsText(file, 'UTF-8');
+        }
+    }
+
+    // ── Excel parser (SheetJS) ──
+    function parseAndPreviewXLSX(arrayBuffer) {
+        try {
+            if (typeof XLSX === 'undefined') {
+                showImportMsg('Excel 解析库未加载，请检查网络连接后刷新页面', false);
+                return;
+            }
+            const wb   = XLSX.read(arrayBuffer, { type: 'array' });
+            const ws   = wb.Sheets[wb.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+            if (rows.length < 2) { showImportMsg('Excel 至少需要 1 行数据（不含表头）', false); return; }
+            const firstRow = rows[0].map(c => String(c).toLowerCase());
+            const dataRows = firstRow.some(c => c.includes('单号') || c.includes('tracking'))
+                             ? rows.slice(1) : rows;
+            buildPreview(dataRows.map(cols => [
+                String(cols[0] ?? ''),
+                String(cols[1] ?? ''),
+                String(cols[2] ?? ''),
+                String(cols[3] ?? ''),
+                String(cols[4] ?? ''),
+            ]));
+        } catch (e) {
+            showImportMsg('Excel 解析失败：' + e.message, false);
+        }
+    }
+
+    // ── CSV parser ──
+    function parseAndPreviewCSV(text) {
+        const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+                          .split('\n').filter(l => l.trim());
+        if (lines.length < 2) { showImportMsg('CSV 至少需要 1 行数据（不含表头）', false); return; }
+        const firstLower = lines[0].toLowerCase();
+        const dataLines  = firstLower.includes('单号') || firstLower.includes('tracking')
+                           ? lines.slice(1) : lines;
+        buildPreview(dataLines.map(parseCSVLine));
+    }
+
+    function parseCSVLine(line) {
+        const result = [];
+        let cur = '', inQ = false;
+        for (let i = 0; i < line.length; i++) {
+            const c = line[i];
+            if (c === '"') {
+                if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+                else inQ = !inQ;
+            } else if (c === ',' && !inQ) {
+                result.push(cur); cur = '';
+            } else { cur += c; }
+        }
+        result.push(cur);
+        return result;
+    }
+
+    function buildPreview(rawRows) {
+        csvRows = rawRows.map(cols => {
+            const [tracking, phone, goods, category, location] = cols;
+            const errors = [];
+            if (!(tracking || '').trim()) errors.push('单号为空');
+            if (!(phone    || '').trim()) errors.push('手机号为空');
+            const loc = parseInt(location);
+            if (!loc || loc < 1 || loc > 6) errors.push('位置需为 1–6');
+            const cat = (category || '').trim();
+            return {
+                tracking: (tracking || '').trim(),
+                phone:    (phone    || '').trim(),
+                goods:    (goods    || '').trim(),
+                category: VALID_CATS.includes(cat) ? cat : '其他',
+                location: loc || 1,
+                errors,
+            };
+        });
+        renderImportPreview();
+        document.getElementById('import-actions').style.display = 'flex';
+    }
+
+    function renderImportPreview() {
+        const errCount = csvRows.filter(r => r.errors.length > 0).length;
+        document.getElementById('import-preview').innerHTML = `
+            <div class="table-card" style="margin-top:12px">
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr>
+                            <th class="no-sort">行</th>
+                            <th class="no-sort">快递单号</th>
+                            <th class="no-sort">手机号</th>
+                            <th class="no-sort">物品信息</th>
+                            <th class="no-sort">分类</th>
+                            <th class="no-sort">位置</th>
+                            <th class="no-sort">状态</th>
+                        </tr></thead>
+                        <tbody>${csvRows.map((r, i) => `
+                            <tr class="${r.errors.length ? 'row-err' : 'row-ok'}">
+                                <td class="id-cell">${i + 1}</td>
+                                <td><span class="mono">${esc(r.tracking)}</span></td>
+                                <td><span class="mono">${esc(r.phone)}</span></td>
+                                <td><div class="raw-text-cell">${esc(r.goods)}</div></td>
+                                <td>${esc(r.category)}</td>
+                                <td>${r.location} 号</td>
+                                <td>${r.errors.length ? esc(r.errors.join('；')) : '✓ 正常'}</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>`;
+        showImportMsg(
+            `共 ${csvRows.length} 行，${csvRows.length - errCount} 行正常，${errCount} 行有误`,
+            errCount === 0
+        );
+    }
+
+    function showImportMsg(text, ok) {
+        const el = document.getElementById('import-msg');
+        el.textContent = text;
+        el.className   = `import-msg ${ok ? 'ok' : 'err'}`;
+    }
+
+    async function submitBatch() {
+        const valid = csvRows.filter(r => r.errors.length === 0);
+        if (valid.length === 0) { showImportMsg('没有可导入的有效数据', false); return; }
+        const btn = document.getElementById('btn-import');
+        btn.disabled    = true;
+        btn.textContent = '导入中…';
+        try {
+            const payload = valid.map(r => ({
+                tracking_number: r.tracking,
+                phone_suffix:    r.phone,
+                goods:           r.goods,
+                category:        r.category,
+                location:        r.location,
+            }));
+            const res  = await fetch('batch_import.php', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ rows: payload }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                let msg = `成功导入 ${data.imported} 条`;
+                if (data.duplicate_count) {
+                    msg += `，跳过 ${data.duplicate_count} 条重复单号`;
+                    if (data.duplicates && data.duplicates.length) {
+                        msg += `（${data.duplicates.slice(0,3).join('、')}${data.duplicates.length > 3 ? '…' : ''}）`;
+                    }
+                } else if (data.skipped) {
+                    msg += `，跳过 ${data.skipped} 条`;
+                }
+                showImportMsg(msg, true);
+                clearImport();
+                fetchData();
+            } else {
+                showImportMsg(data.error || '导入失败', false);
+            }
+        } catch (e) {
+            showImportMsg('网络错误：' + e.message, false);
+        } finally {
+            btn.disabled    = false;
+            btn.textContent = '确认导入';
+        }
+    }
+
+    function clearImport() {
+        csvRows = [];
+        document.getElementById('import-preview').innerHTML     = '';
+        document.getElementById('import-actions').style.display = 'none';
+        document.getElementById('import-msg').textContent       = '';
+        document.getElementById('csv-file').value               = '';
+    }
+
+    // ── 下载导入模板 (xlsx) ──
+    function downloadTemplate() {
+        if (typeof XLSX !== 'undefined') {
+            const ws = XLSX.utils.aoa_to_sheet([
+                ['快递单号', '手机号', '物品信息', '分类', '货架位置'],
+                ['SF1234567890', '13812345678', 'iPhone 15 Pro', '日常生活用品', '3'],
+                ['JT9876543210', '13987654321', '冬季外套',     '衣服',          '1'],
+            ]);
+            ws['!cols'] = [{ wch: 20 }, { wch: 14 }, { wch: 20 }, { wch: 12 }, { wch: 8 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '导入模板');
+            XLSX.writeFile(wb, '速递智管_导入模板.xlsx');
+        } else {
+            // SheetJS 未加载时退回 CSV
+            const csv = '快递单号,手机号,物品信息,分类,货架位置\nSF1234567890,13812345678,iPhone 15 Pro,日常生活用品,3\nJT9876543210,13987654321,冬季外套,衣服,1';
+            const link = document.createElement('a');
+            link.href     = 'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(csv);
+            link.download = '速递智管_导入模板.csv';
+            link.click();
+        }
+    }
+
+    // ── Anomaly ──
+    async function fetchAnomalies() {
+        try {
+            const res = await fetch('get_anomalies.php');
+            if (res.status === 401) { location.href = 'login.html'; return; }
+            const data = await res.json();
+            allAnomalyData = Array.isArray(data) ? data : [];
+            renderAnomalyTable();
+        } catch (e) {
+            document.getElementById('anomaly-body').innerHTML =
+                `<tr><td colspan="10" style="padding:40px;text-align:center;color:var(--red-text)">加载失败：${esc(e.message)}</td></tr>`;
+        }
+    }
+
+    function renderAnomalyTable() {
+        const keyword  = document.getElementById('anomaly-search').value.trim().toLowerCase();
+        const typeF    = document.getElementById('anomaly-type-filter').value;
+        const statusF  = document.getElementById('anomaly-status-filter').value;
+        const tbody    = document.getElementById('anomaly-body');
+
+        const filtered = allAnomalyData.filter(r => {
+            if (typeF   && r.type   !== typeF)   return false;
+            if (statusF && r.status !== statusF) return false;
+            if (keyword && ![r.tracking_number, r.phone_suffix, r.raw_text, r.description]
+                    .some(v => String(v || '').toLowerCase().includes(keyword))) return false;
+            return true;
+        });
+
+        const pending  = allAnomalyData.filter(r => r.status === 'pending').length;
+        const resolved = allAnomalyData.length - pending;
+        document.getElementById('anomaly-stat-total').textContent    = allAnomalyData.length;
+        document.getElementById('anomaly-stat-pending').textContent  = pending;
+        document.getElementById('anomaly-stat-resolved').textContent = resolved;
+        document.getElementById('anomaly-stats-text').textContent    =
+            filtered.length === allAnomalyData.length
+                ? `共 ${allAnomalyData.length} 条`
+                : `${filtered.length} / ${allAnomalyData.length} 条`;
+
+        renderAnomalyCards(filtered);
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="10" style="padding:60px;text-align:center;color:var(--text-3)">暂无异常记录</td></tr>`;
+            return;
+        }
+
+        const typeLabel  = { inbound: '入库异常', outbound: '出库异常' };
+        const statLabel  = { pending: '待处理', resolved: '已处理' };
+
+        tbody.innerHTML = filtered.map(r => `
+            <tr>
+                <td class="id-cell">${esc(r.id)}</td>
+                <td><span class="badge-type badge-${esc(r.type)}">${esc(typeLabel[r.type] || r.type)}</span></td>
+                <td><span class="mono">${esc(r.tracking_number || '—')}</span></td>
+                <td><div class="raw-text-cell" title="${esc(r.raw_text)}">${esc(r.raw_text) || '—'}</div></td>
+                <td>${r.location ? `<span class="tag tag-location">${esc(String(r.location))} 号</span>` : '—'}</td>
+                <td><span class="mono">${esc(r.phone_suffix || '—')}</span></td>
+                <td><div class="desc-cell" title="${esc(r.description)}">${esc(r.description) || '—'}</div></td>
+                <td><span class="badge-type badge-${esc(r.status)}">${esc(statLabel[r.status] || r.status)}</span></td>
+                <td class="time-text">${fmtDate(r.created_at)}</td>
+                <td class="action-cell" onclick="event.stopPropagation()">
+                    <button class="btn-action btn-edit"   onclick="openAnomalyModal(${parseInt(r.id)})">编辑</button>
+                    <button class="btn-action btn-delete" onclick="deleteAnomaly(${parseInt(r.id)})">删除</button>
+                </td>
+            </tr>`).join('');
+    }
+
+    function renderAnomalyCards(filtered) {
+        const list = document.getElementById('anomaly-cards-list');
+        if (!list) return;
+        const typeLabel  = { inbound: '入库异常', outbound: '出库异常' };
+        const statLabel  = { pending: '待处理', resolved: '已处理' };
+        if (filtered.length === 0) {
+            list.innerHTML = '<div style="padding:60px;text-align:center;color:var(--text-3)">暂无异常记录</div>';
+            return;
+        }
+        list.innerHTML = filtered.map(r => `
+            <div class="anomaly-card-m">
+                <div class="anomaly-card-m-top">
+                    <span class="anomaly-card-m-id">#${esc(r.id)}</span>
+                    <div class="anomaly-card-m-badges">
+                        <span class="badge-type badge-${esc(r.type)}">${esc(typeLabel[r.type] || r.type)}</span>
+                        <span class="badge-type badge-${esc(r.status)}">${esc(statLabel[r.status] || r.status)}</span>
+                    </div>
+                </div>
+                <div class="anomaly-card-m-tracking">${esc(r.tracking_number || '单号未知')}</div>
+                ${r.description ? `<div class="anomaly-card-m-desc">${esc(r.description)}</div>` : ''}
+                <div class="anomaly-card-m-meta">
+                    ${r.location  ? `<span>格口 ${esc(String(r.location))} 号</span>` : ''}
+                    ${r.phone_suffix ? `<span>尾号 ${esc(r.phone_suffix)}</span>` : ''}
+                    ${r.raw_text  ? `<span>${esc(r.raw_text.length > 20 ? r.raw_text.slice(0,20)+'…' : r.raw_text)}</span>` : ''}
+                </div>
+                <div class="anomaly-card-m-time">上报于 ${fmtDate(r.created_at)}</div>
+                <div class="anomaly-card-m-actions">
+                    <button class="btn-action btn-edit"   onclick="openAnomalyModal(${parseInt(r.id)})">编辑</button>
+                    <button class="btn-action btn-delete" onclick="deleteAnomaly(${parseInt(r.id)})">删除</button>
+                </div>
+            </div>`).join('');
+    }
+
+    function exportAnomalies() {
+        const typeF   = document.getElementById('anomaly-type-filter').value;
+        const statusF = document.getElementById('anomaly-status-filter').value;
+        const keyword = document.getElementById('anomaly-search').value.trim().toLowerCase();
+        const filtered = allAnomalyData.filter(r => {
+            if (typeF   && r.type   !== typeF)   return false;
+            if (statusF && r.status !== statusF) return false;
+            if (keyword && ![r.tracking_number, r.phone_suffix, r.raw_text, r.description]
+                    .some(v => String(v || '').toLowerCase().includes(keyword))) return false;
+            return true;
+        });
+        const rows = [['ID', '类型', '快递单号', '商品信息', '格口', '手机尾号', '异常描述', '状态', '上报时间']];
+        filtered.forEach(r => rows.push([
+            r.id, r.type === 'inbound' ? '入库异常' : '出库异常',
+            r.tracking_number, r.raw_text, r.location, r.phone_suffix,
+            r.description, r.status === 'pending' ? '待处理' : '已处理', r.created_at
+        ]));
+        const csv  = rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+        const link = Object.assign(document.createElement('a'), {
+            href:     'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(csv),
+            download: `anomalies_${new Date().toISOString().slice(0, 10)}.csv`,
+        });
+        link.click();
+    }
+
+    function openAnomalyModal(id) {
+        const r = allAnomalyData.find(x => parseInt(x.id) === id);
+        if (!r) return;
+        document.getElementById('anomaly-edit-id').value      = r.id;
+        document.getElementById('anomaly-edit-desc').value    = r.description || '';
+        document.getElementById('anomaly-edit-status').value  = r.status || 'pending';
+        document.getElementById('anomaly-edit-msg').textContent = '';
+        document.getElementById('anomaly-modal').classList.add('open');
+    }
+
+    function closeAnomalyModal() {
+        document.getElementById('anomaly-modal').classList.remove('open');
+    }
+
+    async function saveAnomalyEdit() {
+        const id     = parseInt(document.getElementById('anomaly-edit-id').value);
+        const desc   = document.getElementById('anomaly-edit-desc').value.trim();
+        const status = document.getElementById('anomaly-edit-status').value;
+        const btn    = document.getElementById('btn-anomaly-save');
+        const msg    = document.getElementById('anomaly-edit-msg');
+
+        btn.disabled    = true;
+        btn.textContent = '保存中…';
+        msg.textContent = '';
+        try {
+            const res  = await fetch('update_anomaly.php', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ id, status, description: desc }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                closeAnomalyModal();
+                fetchAnomalies();
+            } else {
+                msg.textContent = data.error || '保存失败';
+                msg.className   = 'form-msg err';
+            }
+        } catch (e) {
+            msg.textContent = '网络错误：' + e.message;
+            msg.className   = 'form-msg err';
+        } finally {
+            btn.disabled    = false;
+            btn.textContent = '保存';
+        }
+    }
+
+    async function deleteAnomaly(id) {
+        if (!confirm(`确认删除异常工单 ID ${id}？此操作不可撤销。`)) return;
+        try {
+            const res  = await fetch('delete_anomaly.php', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ id }),
+            });
+            const data = await res.json();
+            if (data.success) fetchAnomalies();
+            else alert(data.error || '删除失败');
+        } catch (e) { alert('网络错误：' + e.message); }
+    }
+
+    // ── Auto-refresh ──
+    function startRefresh() {
+        if (refreshTimer) clearInterval(refreshTimer);
+        refreshTimer = setInterval(fetchData, 3000);
+    }
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) { clearInterval(refreshTimer); refreshTimer = null; }
+        else { fetchData(); startRefresh(); }
+    });
+    window.addEventListener('beforeunload', () => clearInterval(refreshTimer));
+    window.addEventListener('DOMContentLoaded', () => {
+        initPage();
+        document.getElementById('edit-modal').addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeEditModal();
+        });
+        document.getElementById('anomaly-modal').addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeAnomalyModal();
+        });
+    });
+</script>
+</body>
+</html>
