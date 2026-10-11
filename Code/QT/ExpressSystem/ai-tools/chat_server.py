@@ -9,7 +9,7 @@ import json, subprocess, sys, os, socket, traceback, pathlib, threading, time
 import urllib.request, urllib.error
 
 PORT       = 8765
-REPORT_URL = "https://red-waltz.top/register_device.php"
+REPORT_URL = "https://red-waltz.top/projects/sudizhiguan/register_device.php"
 SCRIPT_DIR = pathlib.Path(__file__).parent.resolve()
 HW_TOOLS   = SCRIPT_DIR / "hardware_tools.py"
 
@@ -21,22 +21,24 @@ def _load_api_key():
     # 2. 常见 openclaw 配置路径
     home = pathlib.Path.home()
     candidates = [
+        home / ".openclaw" / "openclaw.json",
         home / ".openclaw" / "config.json",
         home / ".config" / "openclaw" / "config.json",
         home / ".openclaw.json",
     ]
+    def _find_key(obj):
+        if isinstance(obj, str) and obj.startswith("sk-"):
+            return obj
+        if isinstance(obj, dict):
+            for v in obj.values():
+                r = _find_key(v)
+                if r: return r
+        return None
+
     for p in candidates:
         try:
-            data = json.loads(p.read_text())
-            for k in ("deepseekApiKey", "apiKey", "api_key", "DEEPSEEK_API_KEY"):
-                val = data.get(k, "")
-                if val: return val
-            # 嵌套结构: {"deepseek": {"apiKey": "..."}}
-            for section in data.values():
-                if isinstance(section, dict):
-                    for k in ("apiKey", "api_key", "key"):
-                        val = section.get(k, "")
-                        if val and val.startswith("sk-"): return val
+            r = _find_key(json.loads(p.read_text()))
+            if r: return r
         except Exception:
             pass
     return ""
@@ -174,7 +176,7 @@ def deepseek_chat(message: str, session_id: str) -> tuple[str, str]:
 
     for _ in range(4):   # 最多 3 轮 tool call
         payload = json.dumps({
-            "model":    "deepseek-chat",
+            "model":    "deepseek-v4-flash",
             "messages": msgs,
             "tools":    TOOLS,
             "tool_choice": "auto",
@@ -188,8 +190,14 @@ def deepseek_chat(message: str, session_id: str) -> tuple[str, str]:
                 "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
             }
         )
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            data = json.loads(resp.read())
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                data = json.loads(resp.read())
+        except urllib.error.HTTPError as e:
+            body = e.read().decode(errors="replace")
+            if e.code == 401:
+                raise RuntimeError("DeepSeek API Key 无效或未配置，请设置环境变量 DEEPSEEK_API_KEY") from None
+            raise RuntimeError(f"DeepSeek API 返回 HTTP {e.code}: {body[:200]}") from None
 
         choice = data["choices"][0]
         msg    = choice["message"]
@@ -214,23 +222,49 @@ def deepseek_chat(message: str, session_id: str) -> tuple[str, str]:
     return "（工具调用轮次过多，请重试）", session_id
 
 # ── IP 上报 ──────────────────────────────────────────────────────────────────
-def report_ip():
+def _get_local_ip():
+    """获取本机局域网 IP，优先取默认路由出口地址，排除回环/APIPA/VPN 地址。"""
+    # 方法1：socket 路由技巧（最准，取默认出口接口）
+    for target in (("8.8.8.8", 80), ("114.114.114.114", 80)):
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.settimeout(2)
+            s.connect(target)
+            ip = s.getsockname()[0]
+            s.close()
+            if not ip.startswith(("127.", "169.254.")):
+                return ip
+        except Exception:
+            pass
+    # 方法2：hostname 解析兜底
     try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
+        ip = socket.gethostbyname(socket.gethostname())
+        if not ip.startswith(("127.", "169.254.")):
+            return ip
+    except Exception:
+        pass
+    return None
+
+def report_ip():
+    ip = _get_local_ip()
+    if not ip:
+        print("[chat_server] IP 上报失败: 无法获取本机局域网 IP")
+        return
+    try:
         data = json.dumps({"ip": ip}).encode()
         req  = urllib.request.Request(
             REPORT_URL, data=data,
             headers={"Content-Type": "application/json"}
         )
-        urllib.request.urlopen(req, timeout=5)
+        urllib.request.urlopen(req, timeout=10)
         print(f"[chat_server] IP 已上报: {ip}")
     except Exception as e:
-        print(f"[chat_server] IP 上报失败: {e}")
+        print(f"[chat_server] IP 上报失败 (ip={ip}): {e}")
 
 # ── HTTP 服务 ────────────────────────────────────────────────────────────────
+class _Server(HTTPServer):
+    allow_reuse_address = True
+
 class Handler(BaseHTTPRequestHandler):
     def _cors(self):
         self.send_header("Access-Control-Allow-Origin",  "*")
@@ -280,4 +314,4 @@ if __name__ == "__main__":
     report_ip()
     threading.Thread(target=_ip_reporter, daemon=True).start()
     print(f"[chat_server] listening on 0.0.0.0:{PORT}")
-    HTTPServer(("0.0.0.0", PORT), Handler).serve_forever()
+    _Server(("0.0.0.0", PORT), Handler).serve_forever()
