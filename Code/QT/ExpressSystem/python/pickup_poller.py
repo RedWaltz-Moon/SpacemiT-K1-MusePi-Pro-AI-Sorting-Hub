@@ -15,7 +15,7 @@ import sys
 import os
 import fcntl
 
-SERVER       = "https://red-waltz.top"
+SERVER       = "https://red-waltz.top/projects/sudizhiguan"
 API_KEY      = "qt-polling-key-2024"
 POLL_URL     = f"{SERVER}/get_pickup_pending.php?key={API_KEY}"
 COMPLETE_URL = f"{SERVER}/complete_pickup.php"
