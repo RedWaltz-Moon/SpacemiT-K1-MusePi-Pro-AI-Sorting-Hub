@@ -12,8 +12,8 @@ import time
 import os
 import pack_in
 # ========== 配置 ==========
-SERVER_URL   = "http://121.40.169.218/projects/sudizhiguan/receive_shipment.php"
-QUERY_URL    = "http://121.40.169.218/projects/sudizhiguan/get_slots.php"   # 返回格子状态的接口
+SERVER_URL   = "https://red-waltz.top/projects/sudizhiguan/receive_shipment.php"
+QUERY_URL    = "https://red-waltz.top/projects/sudizhiguan/get_slots.php"   # 返回格子状态的接口
 TOTAL_SLOTS  = 6          # 格子总数
 CAMERA_INDEX = 20
 EXIT_AFTER_SCAN = False   # 改为 False 则扫描后继续扫描（会短暂延迟避免重复）
